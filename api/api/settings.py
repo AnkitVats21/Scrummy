@@ -132,15 +132,21 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads/')
 
 
 # JWT authentication settings
-REST_FRAMEWORK = {
-     'DEFAULT_PERMISSION_CLASSES': [
-         'rest_framework.permissions.IsAuthenticated',
-         'rest_framework.permissions.IsAdminUser',
-         ],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-     'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-     )
-}
+# REST_FRAMEWORK = {
+#     #  'DEFAULT_PERMISSION_CLASSES': [
+#     #      'rest_framework.permissions.IsAuthenticated',
+#     #      'rest_framework.permissions.IsAdminUser',
+#     #      ],
+#     # 'DEFAULT_AUTHENTICATION_CLASSES': (
+#     #  'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+#     #  )
+# }
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'in.scrummy@gmail.com'
+EMAIL_HOST_PASSWORD = '@indi@scrummy'
+EMAIL_USE_TLS=True
 
 REST_USE_JWT = True
 from datetime import timedelta
