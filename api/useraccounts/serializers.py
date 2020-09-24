@@ -1,11 +1,17 @@
 from rest_framework import serializers
-from .models import User, UserProfile
+from .models import User, UserProfile,OTP
 from django.contrib.auth import authenticate
 from rest_framework_jwt.settings import api_settings
 class UserProfileSerializer(serializers.ModelSerializer):    
     class Meta:
         model = UserProfile
-        fields = ('name','address', 'picture')
+        fields = ('name','address', 'role', 'picture')
+
+class OTPSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OTP
+        fields = ('otp_email','otp')
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     profile = UserProfileSerializer(required=True)
