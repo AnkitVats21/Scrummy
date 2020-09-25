@@ -20,7 +20,6 @@ class VerifyOTP(generics.CreateAPIView):
     def post(self, request):
 
         request_data = request.data
-
         request_otp  = request_data.get("otp", "")
         request_email= request_data.get("otp_email", "")
         t1           = int(time.time())
@@ -40,7 +39,6 @@ class VerifyOTP(generics.CreateAPIView):
             data = {"details":"otp expired"}
             return Response(data,status = status.HTTP_404_NOT_FOUND)
         elif stored_db_email == request_email and stored_db_otp == request_otp:
-            
             data = {"details":"otp verified"}
             user = User.objects.filter(email__iexact = request_email)[0]
             try:
