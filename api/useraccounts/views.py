@@ -23,7 +23,7 @@ class VerifyOTP(generics.CreateAPIView):
         request_otp  = request_data.get("otp", "")
         request_email= request_data.get("otp_email", "")
         t1           = int(time.time())
-
+        print(request_email,request_otp)
         try:
             obj = OTP.objects.filter(otp_email__iexact = request_email)[0]
         except:
@@ -34,7 +34,7 @@ class VerifyOTP(generics.CreateAPIView):
         stored_db_otp    = obj.otp
         t2               = obj.time
 
-        if (t1-t2)>3000:
+        if (t1-t2)>30000:
             obj.delete()
             data = {"details":"otp expired"}
             return Response(data,status = status.HTTP_404_NOT_FOUND)
@@ -64,6 +64,7 @@ class UserAccountsList(APIView):
 
 class CreateUserAccount(generics.CreateAPIView):
     serializer_class = UserSerializer
+    
 
 
             

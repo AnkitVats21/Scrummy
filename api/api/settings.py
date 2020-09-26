@@ -25,7 +25,7 @@ SECRET_KEY = '(8^64l%-659b$!!)e^q1lt@lyz3!$yk2wiwjc^xd1=_@p!*588'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["265e3fa01612.ngrok.io"]
 
 
 # Application definition
@@ -127,8 +127,8 @@ AUTH_USER_MODEL = 'useraccounts.User'
 
 import os
 
-MEDIA_URL = 'uploads/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads/')
+MEDIA_URL = 'uploads/'
 
 
 #JWT authentication settings
@@ -178,4 +178,3 @@ DEFAULT_FROM_EMAIL = 'Scrummy Team <noreply@scrummy.com>'
 #   'JWT_AUTH_HEADER_PREFIX': 'Bearer',
 #   'JWT_AUTH_COOKIE': None,
 # }
-
