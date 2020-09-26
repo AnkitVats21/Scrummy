@@ -14,17 +14,17 @@ from rest_framework_simplejwt import views as jwt_views
 # router.register('users', CreateUserAccount)
 
 urlpatterns = [
-    url(r'^createaccount/$',  CreateUserAccount.as_view(),  name="createaccount"),
+    # url(r'^createaccount/$',  CreateUserAccount.as_view(),  name="createaccount"),
     #url(r'^', include(router.urls)),
     path('accounts/', UserAccountsList.as_view()),
     path('accounts/<int:id>/', UserAccountsDetails.as_view()),
-    path('token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('login/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
 
     
     path('otp/', GenerateOTP.as_view()),
     path('verify_otp/',  VerifyOTP.as_view()),
-    #path('createaccount/',  CreateUserAccount.as_view()),
+    path('signup/',  CreateUserAccount.as_view(), name='sign_up'),
     
 ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
 

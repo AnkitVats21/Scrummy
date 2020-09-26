@@ -23,7 +23,7 @@ class VerifyOTP(generics.CreateAPIView):
         request_otp  = request_data.get("otp", "")
         request_email= request_data.get("otp_email", "")
         t1           = int(time.time())
-        print(request_email,request_otp)
+
         try:
             obj = OTP.objects.filter(otp_email__iexact = request_email)[0]
         except:
@@ -34,7 +34,7 @@ class VerifyOTP(generics.CreateAPIView):
         stored_db_otp    = obj.otp
         t2               = obj.time
 
-        if (t1-t2)>30000:
+        if (t1-t2)>3000:
             obj.delete()
             data = {"details":"otp expired"}
             return Response(data,status = status.HTTP_404_NOT_FOUND)
@@ -62,9 +62,22 @@ class UserAccountsList(APIView):
         serializer  = UserSerializer(users, many = True)
         return Response(serializer.data)
 
-class CreateUserAccount(generics.CreateAPIView):
+class CreateUserAccount(APIView):
+    queryset = User.objects.all()
     serializer_class = UserSerializer
-    
+    def post(self, request, *args, **kwargs):
+        user_email = request.data.get("email")
+        if check(user_email):
+            t=int(time.time())
+            otp = randint(1000, 9999) 
+            body = ("Hello! Your one time password verification for registering in Scrummy is {}").format(otp)
+            OTP.objects.create(otp = otp, otp_email = user_email, time =t)
+            send_mail('OTP Verification', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
+            return Response(status = status.HTTP_200_OK)
+        else:
+            data = { "details":"invalid email"}
+            return Response( data, status = status.HTTP_406_NOT_ACCEPTABLE)
+        # return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
             
