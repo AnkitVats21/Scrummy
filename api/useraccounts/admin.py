@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import User, UserProfile, OTP#, Restaurent
+from .models import User, UserProfile, OTP, Restaurent, Food
 
 
 class UserProfileInline(admin.StackedInline):
@@ -28,4 +28,12 @@ class UserAdmin(BaseUserAdmin):
     inlines = (UserProfileInline, )
 
 admin.site.register(OTP)
-#admin.site.register(Restaurent)
+
+
+@admin.register(Restaurent)
+class RestaurentAdmin(admin.ModelAdmin):
+    list_display = ('restaurent_name', 'zip_code', 'restaurent_address')
+
+@admin.register(Food)
+class FoodAdmin(admin.ModelAdmin):
+    list_display =('name', 'category', 'rating', 'price')
