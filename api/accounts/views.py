@@ -46,9 +46,9 @@ class VerifyOTP(APIView):
             except:
                 data = {"details":"email not found in users"}
                 return Response(data, status=status.HTTP_404_NOT_FOUND)
-            obj.delete()
-            user.is_active=True
+            user.active=True
             user.save()
+            obj.delete()
             return Response(data , status = status.HTTP_200_OK)
         return Response(status = status.HTTP_404_NOT_FOUND)
         
@@ -93,22 +93,7 @@ class CreateUserAccount(viewsets.ModelViewSet):
         else:
             data = {"details":"Please enyer valid email"}
             return Response(data, status = status.HTTP_400_BAD_REQUEST)
-        # if serializer.is_valid():
-        #     serializer.save()
-        # else:
-        #     print("nahi save hua")
-        # if check(user_email):
-        #     t=int(time.time())
-        #     otp = randint(1000, 9999) 
-        #     body = ("Hello! Your one time password verification for registering in Scrummy is {}").format(otp)
-        #     #OTP.objects.create(otp = otp, otp_email = user_email, time =t)
-        #     #send_mail('OTP Verification', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
-        #     data = { "details":"OTP Sent"}
-        #     return Response(data, status = status.HTTP_200_OK)
-        # else:
-        #     data = { "details":"invalid email"}
-        #     return Response( data, status = status.HTTP_406_NOT_ACCEPTABLE)
-        # # return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class ChangePassword(APIView):
     queryset = User.objects.all()
@@ -144,44 +129,6 @@ class ChangePassword(APIView):
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
 
-        # try:
-        #     user = User.objects.filter(email__iexact = request_email)[0]
-        # except:
-        #     data = {"details":"User not found with this email"}
-        #     return Response(data, status = status.HTTP_404_NOT_FOUND)
-        
-        # t1= int(time.time())
-        # try:
-        #     obj = OTP.objects.filter(otp_email__iexact = request_email)[0]
-        # except:
-        #     data = {"details":"OTP object not found"}
-        #     return Response(data,status=status.HTTP_404_NOT_FOUND)
-        # stored_db_email  = obj.otp_email 
-        # stored_db_otp    = obj.otp
-        # t2               = obj.time
-
-        # if (t1-t2)>10000:
-        #     obj.delete()
-        #     data = {"details":"otp expired"}
-        #     return Response(data,status = status.HTTP_404_NOT_FOUND)
-        # if stored_db_otp == request_otp:
-        #     print(user)
-        #     user.set_password(request_password)
-        #     user.save()
-        #     data = {"details":"Password changed successfully."},
-        #     obj.delete()
-        #     return Response(data, status = status.HTTP_200_OK)
-        # else:
-        #     data={"details":"Invalid OTP"}
-        #     return Response(data, status=status.HTTP_400_BAD_REQUEST)
-
-        #     user = self.get_object(email=request_email)
-        #     serializer = UserSerializer(user, data = request_password)
-        #     if serializer.is_valid():
-        #         serializer.save()
-        #         return Response(serializer.data, status= status.HTTP_200_OK)
-        #     return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
-            
 
 class UserAccountsDetails(APIView):
     permission_classes = (permissions.IsAuthenticated, )
@@ -255,6 +202,17 @@ def check(email):
     else:  
         return False
 
+
+class FoodList(viewsets.ModelViewSet):
+    permission_classes=(permissions.IsAuthenticatedOrReadOnly,)
+    queryset = Food.objects.all()
+    serializer_class  = FoodSerializer
+
+
+
+class RestaurentList(viewsets.ModelViewSet):
+    queryset = Restaurent.objects.all()
+    serializer_class  = RestaurentSerializer
 
 class FoodList(viewsets.ModelViewSet):
     permission_classes=(permissions.IsAuthenticatedOrReadOnly,)
