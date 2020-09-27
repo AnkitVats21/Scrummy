@@ -60,3 +60,5 @@
 #                 return True
 #         elif request.user.is_authenticated:
 #             return True
+
+from models import User

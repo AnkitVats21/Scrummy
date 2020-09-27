@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, UserProfile,OTP
+from .models import User, UserProfile, OTP, Restaurent, Food
 from django.contrib.auth import authenticate
 from rest_framework_jwt.settings import api_settings
 class UserProfileSerializer(serializers.ModelSerializer):    
@@ -15,19 +15,18 @@ class OTPSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     profile = UserProfileSerializer(required=True)
+
     class Meta:
         model = User
         fields = ('id', 'email', 'Role', 'password', 'profile',)
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        print(validated_data)
         profile_data = validated_data.pop('profile')
         password = validated_data.pop('password')
         user = User(**validated_data)
         user.set_password(password)
         role = validated_data.pop('Role')
-        print(user)
         if role==2:
             user.is_restaurent = True
         user.save()
@@ -47,4 +46,13 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         profile.save()
 
         return instance
+class RestaurentSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model   = Restaurent
+        fields  = '__all__'
 
+
+class FoodSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model   = Food
+        fields = '__all__'
