@@ -54,4 +54,4 @@ class RestaurentSerializer(serializers.HyperlinkedModelSerializer):
 class FoodSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model   = Food
-        fields = '__all__'
+        fields = ('url',)
