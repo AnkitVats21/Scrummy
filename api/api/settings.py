@@ -25,7 +25,7 @@ SECRET_KEY = 'qlev2jumncl(_g@(*75&*m9(wh_&3kud=f8y!9gb93o&av+0es'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['df37db14057d.ngrok.io','127.0.0.1']
+ALLOWED_HOSTS = ['cabff666799b.ngrok.io','127.0.0.1']
 
 
 # Application definition
@@ -132,14 +132,14 @@ MEDIA_URL = 'uploads/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads/')
 
 
-REST_FRAMEWORK = {
-     'DEFAULT_PERMISSION_CLASSES': [
-         'rest_framework.permissions.AllowAny',
-         ],
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-     'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
-}
+# REST_FRAMEWORK = {
+#      'DEFAULT_PERMISSION_CLASSES': [
+#          'rest_framework.permissions.AllowAny',
+#          ],
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#      'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     )
+# }
 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -147,3 +147,32 @@ EMAIL_HOST_USER = 'in.scrummy@gmail.com'
 EMAIL_HOST_PASSWORD = 'scrummyindia'
 EMAIL_USE_TLS=True
 DEFAULT_FROM_EMAIL = 'Scrummy Team <noreply@scrummy.com>'
+
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+
+    'JTI_CLAIM': 'jti',
+
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=7),
+}

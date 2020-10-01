@@ -1,4 +1,4 @@
-from .views import OrderItemView, OrderView
+from cart import views
 from django.conf.urls import url, include
 from django.urls import path
 from rest_framework import routers
@@ -9,6 +9,7 @@ from rest_framework import routers
 # router.register('order', OrderView)
 
 urlpatterns = [
-    path('order/', OrderView.as_view()),
-    path('orderitems/', OrderItemView.as_view()),
+    path('cart/<pk>/', views.CartView.as_view()),
+    path('orderitems/<int:id>/', views.OrderItemView.as_view()),
+    path('orderitems/', views.OrderItemListView.as_view()),
  ]

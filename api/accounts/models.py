@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
 )
+from django.shortcuts import reverse
 
 
 class UserManager(BaseUserManager):
@@ -49,7 +50,7 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
-    active = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
     otp     = models.BooleanField(default=False)
@@ -118,8 +119,7 @@ class Restaurent(models.Model):
     def __str__(self):
         return self.restaurent_name
 
-class Food(models.Model):
-    Rating_choices = (
+Rating_choices = (
     (1, 'Poor'),
     (2, 'Average'),
     (3, 'Good'),
@@ -127,7 +127,7 @@ class Food(models.Model):
     (5, 'Excellent'),
     )
 
-    Category_choices =( 
+Category_choices =( 
         ( 'Bakery', 'Bakery'),
         ('Bengali', 'Bengali'), ('Biryani', 'Biryani'), ('Cafe', 'Cafe'),
         ('Chaat', 'Chaat'), ('Chinese', 'Chinese'),  ('Desserts', 'Desserts'),
@@ -141,7 +141,7 @@ class Food(models.Model):
         ('Thalis', 'Thalis'),
     )
 
-    Cuisine_choices =(
+Cuisine_choices =(
         ('North Indian', "North Indian"),
         ('South Indian', "South Indian"),
         ('Chinese', "Chinese"),
@@ -150,18 +150,16 @@ class Food(models.Model):
         ('Punjabi', "Punjabi"),
     )
 
-    restaurent  = models.ForeignKey(Restaurent, on_delete=models.CASCADE)
+class Food(models.Model):
+
     name        = models.CharField(max_length=100, blank=False)
     price       = models.IntegerField(blank=False)
     rating      = models.IntegerField(choices=Rating_choices, default=5)
-    image       = models.ImageField(max_length=2000)
+    image       = models.ImageField(max_length=2000,blank=True,null=True)
     delivery_time   = models.IntegerField(default=60,blank=False)
     offer       = models.PositiveIntegerField(default=0)
     category    = models.CharField(choices= Category_choices, max_length=25)
     cuisine     = models.CharField(choices= Cuisine_choices, max_length=25)
 
-    def slug(self):
-        return slugify(self.name)
- 
     def __str__(self):
         return self.name
