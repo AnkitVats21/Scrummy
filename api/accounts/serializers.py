@@ -50,7 +50,6 @@ class RestaurentSerializer(serializers.HyperlinkedModelSerializer):
         model   = Restaurent
         fields  = '__all__'
 
-
 class FoodSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model   = Food

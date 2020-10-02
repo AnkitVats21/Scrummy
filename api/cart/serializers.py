@@ -1,10 +1,10 @@
-from .models import Cart, MyOrder, OrderItem
+from .models import Cart, MyOrder, OrderItem, CheckoutAddress, Payment
 from rest_framework import serializers
 
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model   = OrderItem
-        fields  = ('id','username',
+        fields  = ('id','user','username',
         'ordered','item',
         'item_name','quantity',
         'get_total_item_price')
@@ -27,7 +27,17 @@ class CartSerializer(serializers.ModelSerializer):
         'ordered_date','ordered',
         'get_total_price')
 
-class MyOrderSerializer(serializers.ModelSerializer):
+# class MyOrderSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model   = MyOrder
+#         fields = ('id',)
+
+class CheckoutAddressSerializer(serializers.ModelSerializer):
     class Meta:
-        model   = MyOrder
-        fields = ('id',)
+        model   = CheckoutAddress
+        fields  = ('user','address','zip')
+
+class Payment(serializers.ModelSerializer):
+    class Meta:
+        model   = Payment
+        field   = ('id','user','amount','timestamp')

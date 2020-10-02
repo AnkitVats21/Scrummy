@@ -45,25 +45,29 @@ class Cart(models.Model):
 
 class MyOrder(models.Model):
     user        = models.OneToOneField(User, on_delete=models.CASCADE)
-    # def __str__(self):
-    #     return self.user.get_email_field_name
+    foods       = models.ManyToManyField(Food)
+    quantity    = models.IntegerField(default=1)
+    order_time  = models.DateTimeField(auto_now_add=True, null=True)
+    ordered     = models.BooleanField(default=False)
 
+    def __str__(self):
+        return self.user.email
 
-#     foods     = models.ManyToManyField(Food)
-#     quantity = models.IntegerField(default=1)
-#     order_time  = models.DateTimeField(auto_now_add=True, null=True)
-#     ordered     = models.BooleanField(default=False)
-#     def __str__(self):
-#         return str(self.foods.name)
-
-
-# class Order(models.Model):
-#     user        = models.OneToOneField(User, on_delete=models.CASCADE)
-#     items       = models.ForeignKey(OrderItem, on_delete=models.CASCADE, blank=True, null=True)
-
-#     def __str__(self):
-#         return str(self.user)
-
-
-# class MyOrders(models.Model)
     
+class CheckoutAddress(models.Model):
+    user            = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    address         = models.CharField(max_length=100)
+    zip             = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.user.email
+
+
+class Payment(models.Model):
+    user        = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
+    amount      = models.FloatField()
+    timestamp   = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user.email

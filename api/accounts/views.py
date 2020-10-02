@@ -141,7 +141,6 @@ class ForgotPassword(APIView):
         return Response(data={"details":"password reset"}, status = status.HTTP_200_OK)
 
 
-
 class UserAccountsDetails(APIView):
     permission_classes = (permissions.IsAuthenticated, )
 
@@ -174,7 +173,6 @@ class UserAccountsDetails(APIView):
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
         return Response(data, status = status.HTTP_400_BAD_REQUEST)
 
-
     def delete(self, request, id):
         data = {"error":"Access Denied"},
         user_id=request.user.id
@@ -184,8 +182,7 @@ class UserAccountsDetails(APIView):
             return Response(status = status.HTTP_204_NO_CONTENT)
         return Response(data , status = status.HTTP_400_BAD_REQUEST)
 
-       
-
+    
 class GenerateOTP(APIView):
     def post(self, request):
         user_email = request.data.get("email")
@@ -241,7 +238,6 @@ class CheckOTPVerifiedStatus(APIView):
             return Response(data={"error":"user is not otp verified"}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(data={'detail':'wrong password'},status=status.HTTP_400_BAD_REQUEST)
 
-
 #validating email
 
 import re 
@@ -255,14 +251,11 @@ def check(email):
         return False
 
 
-
 ###########################################################################
 
             #FOOD RELATED VIEWS 
 
 ###########################################################################
-
-
 
 class FoodList(APIView):
     permission_classes=(permissions.IsAuthenticatedOrReadOnly,)
@@ -275,7 +268,14 @@ class FoodList(APIView):
             return Response(data={"detais":"object not found"}, status=status.HTTP_204_NO_CONTENT)
         serializer = FoodSerializer(food, many=True, context={'request':request})
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+        
+    # def get(self, request, pk):
+    #     try:
+    #         food = Food.objects.get(id=pk)
+    #     except:
+    #         return Response(data={"details":"objects not found"}, status= status.HTTP_204_NO_CONTENT)
+    #     serializer  = FoodSerializer(food, context={'request':request})
+    #     return Response(serializer.data, status = status.HTTP_200_OK)
 
 class FoodView(APIView):
     # permission_classes=(permissions.IsAuthenticatedOrReadOnly,)
@@ -283,23 +283,21 @@ class FoodView(APIView):
     serializer_class  = FoodSerializer
 
     def get(self, request, pk):
-        print(pk)
+
         try:
-            pk  = str(pk)
-            food = Food.objects.filter(cuisine__iexact=pk)
+            food    = Food.objects.filter(cuisine__iexact=pk)
+            if not food:
+                food = Food.objects.filter(category__iexact=pk)
+            if not food:
+                food = Food.objects.filter(name__icontains=pk)
         except:
             return Response(data={"detais":"object not found"}, status=status.HTTP_204_NO_CONTENT)
         serializer = FoodSerializer(food, many=True, context={'request':request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-
 class RestaurentList(viewsets.ModelViewSet):
     queryset = Restaurent.objects.all()
     serializer_class  = RestaurentSerializer
-
-
-
 
 class RestaurentList(viewsets.ModelViewSet):
     queryset = Restaurent.objects.all()
@@ -307,38 +305,38 @@ class RestaurentList(viewsets.ModelViewSet):
 
 from cart.models import OrderItem, Cart
 from cart import views
-
 from .models import Food
+from django.utils import timezone
+
 
 class AddToCartOrRemove(APIView):
 
     def post(self, request, pk):
-        print(request.data)
         item = get_object_or_404(Food, id=pk)
-        print(item,request.user)
+        #print(item,request.user)
         order_item, created = OrderItem.objects.get_or_create(item = item, user = request.user, ordered = False)
         cart_qs = Cart.objects.filter(user=request.user, ordered=False)
+        #print(cart_qs)
         if cart_qs.exists():
-            order = order_qs[0]
+            order = cart_qs[0]
             if order.items.filter(item__pk=item.pk).exists():
                 order_item.quantity += 1
                 order_item.save()
                 return Response(data={'details':"item added to cart"},status=status.HTTP_201_CREATED)
             else:
                 order.items.add(order_item)
-                messages.info(request, "Item added to your cart")
-                return redirect("core:order-summary")
+                return Response(data={'details':"item added to cart"},status=status.HTTP_201_CREATED)
         else:
             ordered_date = timezone.now()
             order       = Cart.objects.create(user=request.user, ordered_date=ordered_date)
             order.items.add(order_item)
             return Response(data={"details":"item added to your cart"})
 
-    def delete(request, pk):
+    def delete(self, request, pk):
         item = get_object_or_404(Food, pk=pk )
-        order_qs = Cart.objects.filter(user=request.user, ordered=False)
-        if order_qs.exists():
-            order = order_qs[0]
+        cart_qs = Cart.objects.filter(user=request.user, ordered=False)
+        if cart_qs.exists():
+            order = cart_qs[0]
             if order.items.filter(item__pk=item.pk).exists():
                 order_item = OrderItem.objects.filter(item=item, user=request.user, ordered=False)[0]
                 order_item.delete()
@@ -347,3 +345,20 @@ class AddToCartOrRemove(APIView):
                return Response(data= {'details':"item doesn't exists"},status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(data={'details':"you don't have any order"},status=status.HTTP_204_NO_CONTENT)
+
+    def patch(self, request, pk):
+        item = get_object_or_404(Food, pk=pk)
+        order_qs = Cart.objects.filter(user=request.user, ordered=False)
+        if order_qs.exists():
+            order = order_qs[0]
+            if order.items.filter(item__pk=item.pk).exists():
+                order_item = OrderItem.objects.filter(item=item, user=request.user, ordered=False)[0]
+                if order_item.quantity>1:
+                    order_item.quantity -=1
+                    order_item.save()
+                else:
+                    order_item.delete()
+                return Response(data={"details":"Food Item quantity updated"}, status= status.HTTP_200_OK)
+            else:
+                return Response(data={"details":"Food Item does not exists"}, status=status.HTTP_410_GONE)
+        return Response(data={"details":"You do not have an order"}, status=status.HTTP_404_NOT_FOUND)
