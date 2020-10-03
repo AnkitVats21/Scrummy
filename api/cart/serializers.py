@@ -22,15 +22,15 @@ class CartSerializer(serializers.ModelSerializer):
     #items = OrderItemSerializer(required=True)
     class Meta:
         model   = Cart
-        fields = ('id','user','username','items',
+        fields = ('id','username',
         'items_name','start_date',
         'ordered_date','ordered',
         'get_total_price')
 
-# class MyOrderSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model   = MyOrder
-#         fields = ('id',)
+class MyOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model   = MyOrder
+        fields =  ('__str__','id','item','order_time','user','order_items')
 
 class CheckoutAddressSerializer(serializers.ModelSerializer):
     class Meta:

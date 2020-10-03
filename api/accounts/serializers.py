@@ -8,15 +8,15 @@ class OTPSerializer(serializers.ModelSerializer):
         model = OTP
         fields = ('otp_email','otp')
 
-class UserProfileSerializer(serializers.ModelSerializer):    
+class UserProfileSerializer(serializers.HyperlinkedModelSerializer):    
     class Meta:
         model = UserProfile
-        fields = ('name','address')
+        fields = ('name','address','picture')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     profile = UserProfileSerializer(required=True)
-
+    
     class Meta:
         model = User
         fields = ('id', 'email', 'password', 'profile',)
@@ -51,9 +51,10 @@ class RestaurentSerializer(serializers.HyperlinkedModelSerializer):
         fields  = '__all__'
 
 class FoodSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="accounts:food-detail")
     class Meta:
         model   = Food
-        fields = ('id','name',
+        fields = ('id','name','url',
         'image','price',
         'rating','offer','category',
         'cuisine','delivery_time')

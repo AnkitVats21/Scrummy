@@ -9,8 +9,9 @@ from rest_framework import routers
 # router.register('order', OrderView)
 
 urlpatterns = [
-    path('cart/<pk>/', views.CartView.as_view()),
+    path('cart/', views.CartView.as_view()),
     path('orderitems/<id>/', views.OrderItemView.as_view()),
     path('orderitems/', views.OrderItemListView.as_view()),
-    path('checkoutaddress/', views.CheckoutView.as_view())
+    path('checkoutaddress/', views.CheckoutView.as_view()),
+    path('myorders/', views.MyOrderListView.as_view()),
  ]

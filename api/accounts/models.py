@@ -146,12 +146,13 @@ Cuisine_choices =(
         ('South Indian', "South Indian"),
         ('Chinese', "Chinese"),
         ('Italian', "Italian"),
-        ('French', "French"),
+        ('sweets', "sweets"),
         ('Punjabi', "Punjabi"),
+        ('non-veg', "non-veg"),
     )
 
 class Food(models.Model):
-
+    
     name        = models.CharField(max_length=100, blank=False)
     price       = models.IntegerField(blank=False)
     rating      = models.IntegerField(choices=Rating_choices, default=5)
@@ -163,3 +164,6 @@ class Food(models.Model):
 
     def __str__(self):
         return self.name
+
+    def restaurent(self):
+        return self.restaurent.restaurent_name

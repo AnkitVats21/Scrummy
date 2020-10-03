@@ -62,10 +62,11 @@ class VerifyOTP(APIView):
 
 class UserAccountsList(APIView):
     permission_classes = (permissions.AllowAny,)
+    serializer_class = UserSerializer
 
     def get(self, request):
         users       = User.objects.all()
-        serializer  = UserSerializer(users, many = True)
+        serializer  = UserSerializer(users, many = True,context={'request': request})
         return Response(serializer.data)
 
 class CreateUserAccount(APIView):
@@ -116,7 +117,7 @@ class ResetPasswordOTP(APIView):
         stored_db_otp    = obj.otp
         t2               = obj.time
 
-        if (t1-t2)>3000:
+        if (t1-t2)>300:
             obj.delete()
             data = {"error":"otp expired"}
             return Response(data,status = status.HTTP_404_NOT_FOUND)
@@ -143,13 +144,14 @@ class ForgotPassword(APIView):
 
 class UserAccountsDetails(APIView):
     permission_classes = (permissions.IsAuthenticated, )
+    serializer_class= UserSerializer
 
     def get_object(self, id):
         
         try:
             return User.objects.get(id = id)
         except User.DoesNotExist:
-            raise Http404 
+            return Response( data={'details':"doesn't exist"}, status = status.HTTP_400_BAD_REQUEST) 
     
     def get(self, request, id):
 
@@ -269,13 +271,6 @@ class FoodList(APIView):
         serializer = FoodSerializer(food, many=True, context={'request':request})
         return Response(serializer.data, status=status.HTTP_200_OK)
         
-    # def get(self, request, pk):
-    #     try:
-    #         food = Food.objects.get(id=pk)
-    #     except:
-    #         return Response(data={"details":"objects not found"}, status= status.HTTP_204_NO_CONTENT)
-    #     serializer  = FoodSerializer(food, context={'request':request})
-    #     return Response(serializer.data, status = status.HTTP_200_OK)
 
 class FoodView(APIView):
     # permission_classes=(permissions.IsAuthenticatedOrReadOnly,)
@@ -287,11 +282,13 @@ class FoodView(APIView):
         try:
             food    = Food.objects.filter(cuisine__iexact=pk)
             if not food:
-                food = Food.objects.filter(category__iexact=pk)
+                food = Food.objects.filter(category__icontains=pk)
             if not food:
                 food = Food.objects.filter(name__icontains=pk)
+            if not food:
+                food = Food.objects.filter(id=pk)
         except:
-            return Response(data={"detais":"object not found"}, status=status.HTTP_204_NO_CONTENT)
+            return Response(data={"details":"object not found"}, status=status.HTTP_204_NO_CONTENT)
         serializer = FoodSerializer(food, many=True, context={'request':request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
