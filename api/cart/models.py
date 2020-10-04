@@ -44,17 +44,19 @@ class Cart(models.Model):
 
 
 class MyOrder(models.Model):
-    user        = models.ForeignKey(User, on_delete=models.CASCADE)
-    order_items = models.ManyToManyField(OrderItem)
+    user        = models.OneToOneField(User, on_delete=models.CASCADE)
+    foods       = models.ManyToManyField(Food)
+    quantity    = models.IntegerField(default=1)
     order_time  = models.DateTimeField(auto_now_add=True, null=True)
+    ordered     = models.BooleanField(default=False)
+
     def __str__(self):
         return self.user.email
-    def item(self):
-        return self.order_items.name
 
     
 class CheckoutAddress(models.Model):
     user            = models.ForeignKey(User, on_delete=models.CASCADE)
+    
     address         = models.CharField(max_length=100)
     zip             = models.CharField(max_length=100)
 

@@ -26,17 +26,20 @@ urlpatterns = [
     path('api/verify_otp/',  views.VerifyOTP.as_view()),
 ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
 
-
 #fooditems related urlpatterns
 
+# router = routers.DefaultRouter()
+# router.register(r'restaurent', views.RestaurentList)
 
 urlpatterns += [
-    path('api/foodlist/', views.FoodList.as_view(), name='food-detail'),
+    path('api/foodlist/', views.FoodList.as_view()),
     #path('api/foodlist/<pk>/', views.FoodList.as_view()),
-    path('api/foodlist/<pk>/', views.FoodView.as_view(), name='food-detail'),
+    path('api/food/<pk>/', views.FoodView.as_view(), name='food-detail'),
+    path('api/restaurentlist/', views.RestaurentList.as_view(), name='restaurent-detail'),
+    path('api/restaurent/<int:pk>/', views.RestaurentView.as_view()),
 ]
 urlpatterns += [
     path('api/add-to-cart/<pk>/', views.AddToCartOrRemove.as_view(), name='add-to-cart'),
     # path('api/api-auth/', include(resturls)),
-    # url(r'^', include(router.urls)),
+    #url(r'^', include(router.urls)),
 ]

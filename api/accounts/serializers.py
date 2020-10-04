@@ -8,15 +8,15 @@ class OTPSerializer(serializers.ModelSerializer):
         model = OTP
         fields = ('otp_email','otp')
 
-class UserProfileSerializer(serializers.HyperlinkedModelSerializer):    
+class UserProfileSerializer(serializers.ModelSerializer):    
     class Meta:
         model = UserProfile
-        fields = ('name','address','picture')
+        fields = ('name','address')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     profile = UserProfileSerializer(required=True)
-    
+
     class Meta:
         model = User
         fields = ('id', 'email', 'password', 'profile',)
@@ -45,16 +45,38 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
         return instance
 
-class RestaurentSerializer(serializers.HyperlinkedModelSerializer):
+class RestaurentSerializer(serializers.ModelSerializer):
     class Meta:
         model   = Restaurent
-        fields  = '__all__'
+        fields = ('id','user','restaurent_name','zip_code','restaurent_address','description',)
+
+    def create(self, validated_data):
+        # restaurent_owner = validated_data.pop('user')
+        # print(restaurent_owner)
+        # try:
+        #     user = User.objects.filer(email=restaurent_owner)
+        # except:
+        #     return 'user not found'
+        # print('user found')
+        # restaurent.user=resturent_owner
+        restaurent = Restaurent(**validated_data)
+        restaurent.save()
+        return restaurent
 
 class FoodSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="accounts:food-detail")
+    restname = RestaurentSerializer()
+
     class Meta:
         model   = Food
-        fields = ('id','name','url',
-        'image','price',
+        fields = ('id','url','name',
+        'image','price','restname',
         'rating','offer','category',
         'cuisine','delivery_time')
+
+    def create(self, validated_data):
+        # user_id = validated_data.pop('user')
+        # print(user_id)
+        food = FoodSerializer(**validated_data)
+        food.save()
+        return food

@@ -112,12 +112,17 @@ class OTP(models.Model):
 
 
 class Restaurent(models.Model):
-    restaurent_name      = models.CharField(unique=True, max_length=50, blank=False)
-    restaurent_address   = models.CharField(max_length=200, blank=False)
+    user                = models.ForeignKey(User, on_delete=models.CASCADE,related_name='owner', blank=True, null=True)
+    restaurent_name     = models.CharField(unique=True, max_length=50, blank=False)
+    restaurent_address  = models.CharField(max_length=200, blank=False)
     zip_code     = models.CharField(max_length=6, blank=False)
     description = models.CharField(max_length=500, blank=False)
     def __str__(self):
         return self.restaurent_name
+        
+    def owner(self):
+        return self.user.email
+
 
 Rating_choices = (
     (1, 'Poor'),
@@ -146,13 +151,12 @@ Cuisine_choices =(
         ('South Indian', "South Indian"),
         ('Chinese', "Chinese"),
         ('Italian', "Italian"),
-        ('sweets', "sweets"),
+        ('French', "French"),
         ('Punjabi', "Punjabi"),
-        ('non-veg', "non-veg"),
     )
 
 class Food(models.Model):
-    
+    rest_food   = models.ForeignKey(Restaurent, on_delete=models.CASCADE, related_name='restaurent_food', blank=True, null=True)
     name        = models.CharField(max_length=100, blank=False)
     price       = models.IntegerField(blank=False)
     rating      = models.IntegerField(choices=Rating_choices, default=5)
@@ -165,5 +169,5 @@ class Food(models.Model):
     def __str__(self):
         return self.name
 
-    def restaurent(self):
-        return self.restaurent.restaurent_name
+    def restname(self):
+        return self.rest_food
