@@ -7,7 +7,9 @@ from rest_framework import permissions
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from .models import Cart,MyOrder,OrderItem,CheckoutAddress,Payment
 from .serializers import CartSerializer, OrderItemSerializer# ,MyOrderSerializer
-
+from accounts.serializers import FoodSerializer
+from django.http import Http404
+from accounts.models import Food, User
 #Create your views here.
 
 class CartView(APIView):
@@ -28,18 +30,35 @@ class CartView(APIView):
 class OrderItemView(APIView):
     query_set   =   OrderItem.objects.all()
     serializer_class = OrderItemSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
-    def get_object(self, id):
+    def get_image_url(self,data,request):
+        food = FoodSerializer(data,context={'request': request})
+        return food
+    
+    def verify_user(self,request):
+        user = User.objects.filter(email__iexact=str(request.user))
+        return int(user[0].id)
+
+    def get(self, request):
+        id1=self.verify_user(request)
         try:
-            #print(OrderItem.objects.filter(user = id))
-            return OrderItem.objects.filter(user__exact = id)
-        except Cart.DoesNotExist:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    def get(self, request, id):
-        item = self.get_object(id=id)
-        serializer = OrderItemSerializer(item, many=True)
-        return Response(serializer.data)
+            item=OrderItem.objects.filter(user__exact = id1)
+        except:
+            raise Http404
+        if item.exists():
+            serializer = OrderItemSerializer(item, many=True,context={'request': request})
+            for i in range(len(serializer.data)):
+                data=item[i].item
+                food_item = self.get_image_url(data,request)
+                serializer.data[i]['image']=food_item.data['image']
+                serializer.data[i]['offer']=food_item.data['offer']
+                # print(item[i].item)
+                # print(serializer.data[i])
+                # print(food_item.data)
+            return Response(serializer.data)
+        return Response(data={'details':'dataa not found'},status=status.HTTP_400_BAD_REQUEST)
+    
 
 from cart import serializers
 class CheckoutView(APIView):
@@ -93,7 +112,7 @@ class OrderItemListView(APIView):
 
     def get(self, request):
         item = OrderItem.objects.all()
-        serializer = OrderItemSerializer(item, many=True)
+        serializer = OrderItemSerializer(item, many=True,context={'request': request})
         return Response(serializer.data)
 
     def post(self, request):

@@ -7,7 +7,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields  = ('id','user','username',
         'ordered','item',
         'item_name','quantity',
-        'get_total_item_price')
+        'get_total_item_price','delivery_time')
 
     def create(self, validated_data):
         return OrderItem.objects.create(**validated_data)

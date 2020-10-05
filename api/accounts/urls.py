@@ -34,7 +34,8 @@ urlpatterns = [
 urlpatterns += [
     path('api/foodlist/', views.FoodList.as_view()),
     #path('api/foodlist/<pk>/', views.FoodList.as_view()),
-    path('api/food/<pk>/', views.FoodView.as_view(), name='food-detail'),
+    path('api/foodlist/<pk>/', views.FoodView.as_view(), name='food-detail'),
+    path('api/addfood/', views.AddFoodItem.as_view(), name='add-food-detail'),
     path('api/restaurentlist/', views.RestaurentList.as_view(), name='restaurent-detail'),
     path('api/restaurent/<int:pk>/', views.RestaurentView.as_view()),
 ]

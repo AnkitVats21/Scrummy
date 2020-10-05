@@ -19,7 +19,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'profile',)
+        fields = ('id', 'email', 'password', 'profile','restaurent')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -63,20 +63,15 @@ class RestaurentSerializer(serializers.ModelSerializer):
         restaurent.save()
         return restaurent
 
+
+
+
 class FoodSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="accounts:food-detail")
-    restname = RestaurentSerializer()
-
     class Meta:
         model   = Food
         fields = ('id','url','name',
-        'image','price','restname',
+        'image','price',
         'rating','offer','category',
-        'cuisine','delivery_time')
-
-    def create(self, validated_data):
-        # user_id = validated_data.pop('user')
-        # print(user_id)
-        food = FoodSerializer(**validated_data)
-        food.save()
-        return food
+        'cuisine','delivery_time','rest_food_id','restname',)
+    # def create(self, validated_data):

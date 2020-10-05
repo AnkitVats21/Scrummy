@@ -25,7 +25,7 @@ SECRET_KEY = 'qlev2jumncl(_g@(*75&*m9(wh_&3kud=f8y!9gb93o&av+0es'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['89be1764453a.ngrok.io','127.0.0.1']
+ALLOWED_HOSTS = ['a078d6616f5e.ngrok.io','127.0.0.1']
 
 
 # Application definition
@@ -132,14 +132,14 @@ MEDIA_URL = 'uploads/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads/')
 
 
-# REST_FRAMEWORK = {
-#      'DEFAULT_PERMISSION_CLASSES': [
-#          'rest_framework.permissions.AllowAny',
-#          ],
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
-#      'rest_framework_simplejwt.authentication.JWTAuthentication',
-#     )
-# }
+REST_FRAMEWORK = {
+     'DEFAULT_PERMISSION_CLASSES': [
+         'rest_framework.permissions.AllowAny',
+         ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+     'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587

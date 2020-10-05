@@ -50,10 +50,11 @@ class User(AbstractBaseUser):
         max_length=255,
         unique=True,
     )
-    active = models.BooleanField(default=True)
-    staff = models.BooleanField(default=False)
-    admin = models.BooleanField(default=False)
-    otp     = models.BooleanField(default=False)
+    active      = models.BooleanField(default=True)
+    staff       = models.BooleanField(default=False)
+    admin       = models.BooleanField(default=False)
+    otp         = models.BooleanField(default=False)
+    restaurent  = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -90,6 +91,10 @@ class User(AbstractBaseUser):
     @property
     def otp_verified(self):
         return self.otp
+
+    @property
+    def is_restaurent(self):
+        return self.restaurent
     
 class UserProfile(models.Model):
 
@@ -162,6 +167,7 @@ class Food(models.Model):
     rating      = models.IntegerField(choices=Rating_choices, default=5)
     image       = models.ImageField(max_length=2000,blank=True,null=True)
     delivery_time   = models.IntegerField(default=60,blank=False)
+    cooking_time   = models.IntegerField(default=60,blank=True)
     offer       = models.PositiveIntegerField(default=0)
     category    = models.CharField(choices= Category_choices, max_length=25)
     cuisine     = models.CharField(choices= Cuisine_choices, max_length=25)
@@ -170,4 +176,5 @@ class Food(models.Model):
         return self.name
 
     def restname(self):
-        return self.rest_food
+        print(self.rest_food)
+        return self.rest_food.restaurent_name

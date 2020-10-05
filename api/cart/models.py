@@ -19,6 +19,9 @@ class OrderItem(models.Model):
         return self.quantity * self.item.price
     def item_name(self):
         return self.item.name
+   
+    def delivery_time(self):
+        return self.item.delivery_time
     
 
 class Cart(models.Model):
