@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework import permissions
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from .models import Cart,MyOrder,OrderItem,CheckoutAddress,Payment
-from .serializers import CartSerializer, OrderItemSerializer, CheckoutAddressSerializer# ,MyOrderSerializer
+from .serializers import CartSerializer, OrderItemSerializer, CheckoutAddressSerializer, PaymentSerializer
 from accounts.serializers import FoodSerializer
 from django.http import Http404
 from accounts.models import Food, User
@@ -29,10 +29,10 @@ class CartView(APIView):
 
 class OrderItemView(APIView):
     query_set   =   OrderItem.objects.all()
-    serializer_class = OrderItemSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = OrderItemSerializer, PaymentSerializer
+    #permission_classes = (permissions.IsAuthenticated,)
 
-    def get_image_url(self,data,request):
+    def get_food_data(self,data,request):
         food = FoodSerializer(data,context={'request': request})
         return food
     
@@ -40,25 +40,59 @@ class OrderItemView(APIView):
         user = User.objects.filter(email__iexact=str(request.user))
         return int(user[0].id)
 
-    def get(self, request):
+    def get(self, request, pk):
         id1=self.verify_user(request)
-        try:
-            item=OrderItem.objects.filter(user__exact = id1)
-        except:
-            raise Http404
-        if item.exists():
-            serializer = OrderItemSerializer(item, many=True,context={'request': request})
-            for i in range(len(serializer.data)):
-                data=item[i].item
-                food_item = self.get_image_url(data,request)
-                serializer.data[i]['image']=food_item.data['image']
-                serializer.data[i]['offer']=food_item.data['offer']
-                # print(item[i].item)
-                # print(serializer.data[i])
-                # print(food_item.data)
-            return Response(serializer.data)
-        return Response(data={'details':'dataa not found'},status=status.HTTP_400_BAD_REQUEST)
-    
+        if pk=='ordered':
+            try:
+                item=OrderItem.objects.filter(user__exact = id1).filter(ordered=True)
+            except:
+                raise Http404
+            if item.exists():
+                serializer = OrderItemSerializer(item, many=True,context={'request': request})
+                for i in range(len(serializer.data)):
+                    data        =item[i].item
+                    food_item   = self.get_food_data(data,request)
+                    serializer.data[i]['image']=food_item.data['image']
+                    serializer.data[i]['offer']=food_item.data['offer']
+                # pay_data    = Payment.objects.filter(user=id1)
+                # pay         = PaymentSerializer(pay_data, many=True)
+                # serializer.data[0]['payment']=pay.data
+                return Response(serializer.data)
+            return Response(data={'details':'data not found'},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            #item=OrderItem.objects.filter(user__exact = id1).filter(ordered=False)
+            try:
+                item=OrderItem.objects.filter(user__exact = id1).filter(ordered=False)
+            except:
+                raise Http404
+            if item.exists():
+                serializer = OrderItemSerializer(item, many=True,context={'request': request})
+                for i in range(len(serializer.data)):
+                    data=item[i].item
+                    food_item = self.get_food_data(data,request)
+                    serializer.data[i]['image']=food_item.data['image']
+                    serializer.data[i]['offer']=food_item.data['offer']
+                return Response(serializer.data)
+            return Response(data={'details':'data not found'},status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, pk):
+        request_data=request.data
+        user = request.user
+        id1=self.verify_user(request)
+        request_data['user']=id1
+        item=OrderItem.objects.filter(user__exact = id1).filter(ordered=False)
+        if pk=='checkout':
+            for i in range(len(item)):
+                food=item[i]
+                food.ordered=True
+                # food.ordered_date=date
+                food.save()
+            serializer = PaymentSerializer(data=request_data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)       
+            return Response(status=status.HTTP_400_BAD_REQUEST)         
+
 
 from cart import serializers
 class CheckoutView(APIView):
@@ -159,8 +193,13 @@ class CheckoutAddressView(APIView):
         add.delete()
         return Response(data={'details':'address deleted'})
 
-
-# class CheckoutAddressView(APIView):
-#     queryset            = CheckoutAddress.objects.all()
-#     serializer_class    = CheckoutAddressSerializer
-#     # def get(self,request):
+class PaymentView(APIView):
+    serializer_class = PaymentSerializer
+    def verify_user(self,request):
+        user = User.objects.filter(email__iexact=str(request.user))
+        return int(user[0].id)
+    def get(self, request):
+        id1=self.verify_user(request)
+        data = Payment.objects.filter(user=id1)
+        serializer = PaymentSerializer(data, many=True)
+        return Response(serializer.data)

@@ -26,7 +26,6 @@ class VerifyOTP(APIView):
         request_email= request_data.get("otp_email", "")
         t1           = int(time.time())
         
-
         try:
             obj = OTP.objects.filter(otp_email__iexact = request_email)[0]
         except:
@@ -54,12 +53,7 @@ class VerifyOTP(APIView):
             user.save()
             obj.delete()
             return Response(data , status = status.HTTP_200_OK)
-        return Response(data={"error":"wrong otp"},status = status.HTTP_404_NOT_FOUND)
-
-# class LoginView(APIView):
-
-        
-
+        return Response(data={"error":"wrong otp"},status = status.HTTP_404_NOT_FOUND)    
 
 class UserAccountsList(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -141,7 +135,6 @@ class ForgotPassword(APIView):
         user.save()
         return Response(data={"details":"password reset"}, status = status.HTTP_200_OK)
 
-
 class UserAccountsDetails(APIView):
     #permission_classes = (permissions.IsAuthenticated, )
 
@@ -153,7 +146,7 @@ class UserAccountsDetails(APIView):
         
     def get(self, request):
         user_id=request.user.id
-        print(user_id)
+        #print(user_id)
         user = self.get_object(id=str(user_id))
         serializer = UserSerializer(user)
         return Response(serializer.data)
@@ -272,12 +265,15 @@ class FoodList(APIView):
         
     def post(self, request):
         food_data   = request.data
-        serializer = FoodSerializer(data=food_data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
-        return Response(data={"details":"please enter valid data"})
-
+        user_email = request.user
+        user = User.objects.filter(email__iexact=str(user_email))
+        if user.restaurent:
+            serializer = FoodSerializer(data=food_data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data,status=status.HTTP_201_CREATED)
+            return Response(data={"details":"please enter valid data"})
+        return Response(data={"details":"you are not a provider"})
         
 
 class FoodView(APIView):
@@ -299,47 +295,6 @@ class FoodView(APIView):
             return Response(data={"detais":"object not found"}, status=status.HTTP_204_NO_CONTENT)
         serializer = FoodSerializer(food, many=True, context={'request':request})
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-#add food item in restaurent
-
-
-class RestaurentList(APIView):
-    serializer_class  = RestaurentSerializer
-
-    def get(self, request):
-        queryset = Restaurent.objects.all()
-        #print(queryset)
-        serializer = RestaurentSerializer(queryset, many= True,context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    def post(self, request):
-        data = request.data
-        #print(request.user)
-        try:
-            user = User.objects.filter(email=str(request.user))[0]
-        except:
-            raise Http404
-        #print(user)
-        if user.restaurent:
-            serializer=RestaurentSerializer(data=data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(data={'details':'user is not restaurent owner'},status=status.HTTP_400_BAD_REQUEST)
-
-        
-        
-from .serializers import RestaurentSerializer
-
-class RestaurentView(APIView):
-    serializer_class = RestaurentSerializer
-    def get(self, request, pk):
-        try:
-            queryset = Restaurent.objects.get(id=pk)
-        except:
-            return Response({'details':'restaurent not found with given id'})
-        serializer = RestaurentSerializer(queryset)
-        return Response(serializer.data, status=status.HTTP_302_FOUND)
-    # def delete(self,request,pk):
 
 
 
@@ -404,6 +359,59 @@ class AddToCartOrRemove(APIView):
                 return Response(data={"details":"Food Item does not exists"}, status=status.HTTP_410_GONE)
         return Response(data={"details":"You do not have an order"}, status=status.HTTP_404_NOT_FOUND)
 
+######################################
+#   """"""""""""""""""""""""""""     #
+#   add food item in restaurent      #
+#   """"""""""""""""""""""""""""     #
+######################################
+
+class RestaurentList(APIView):
+    serializer_class  = RestaurentSerializer
+
+    def verify_user(self,request):
+        user = User.objects.filter(email__iexact=str(request.user))
+        return int(user[0].id)
+
+    def get(self, request):
+        id1=self.verify_user(request)
+        try:
+            queryset = Restaurent.objects.filter(user=id1)
+        except:
+            raise Http404
+        print(queryset)
+        serializer = RestaurentSerializer(queryset, many= True,context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def post(self, request):
+        data = request.data
+        #print(request.user)
+        try:
+            user = User.objects.filter(email=str(request.user))[0]
+        except:
+            raise Http404
+        #print(user)
+        if user.restaurent:
+            serializer=RestaurentSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data={'details':'user is not restaurent owner'},status=status.HTTP_400_BAD_REQUEST)
+
+        
+        
+from .serializers import RestaurentSerializer
+
+class RestaurentView(APIView):
+    serializer_class = RestaurentSerializer
+    def get(self, request, pk):
+        try:
+            queryset = Restaurent.objects.get(id=pk)
+        except:
+            return Response({'details':'restaurent not found with given id'})
+        serializer = RestaurentSerializer(queryset)
+        return Response(serializer.data, status=status.HTTP_302_FOUND)
+    # def delete(self,request,pk):
+
+        
 class AddFoodItem(APIView):
     serializer_class = FoodSerializer
     def post(self, request):
@@ -417,4 +425,3 @@ class AddFoodItem(APIView):
             food = Food.create()
             return Response(serializer.data)
         #return Response(data=,status=status.HTTP_400_BAD_REQUEST)"""data={'details':'bad request'}"""
-        

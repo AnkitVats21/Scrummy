@@ -37,7 +37,7 @@ class CheckoutAddressSerializer(serializers.ModelSerializer):
         model   = CheckoutAddress
         fields  = ('id','user','phone','address','zip')
 
-class Payment(serializers.ModelSerializer):
+class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model   = Payment
-        field   = ('id','user','amount','timestamp')
+        fields  = '__all__'
