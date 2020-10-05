@@ -35,7 +35,7 @@ class CartSerializer(serializers.ModelSerializer):
 class CheckoutAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model   = CheckoutAddress
-        fields  = ('user','address','zip')
+        fields  = ('id','user','phone','address','zip')
 
 class Payment(serializers.ModelSerializer):
     class Meta:

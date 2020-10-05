@@ -11,7 +11,7 @@ class OTPSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):    
     class Meta:
         model = UserProfile
-        fields = ('name','address')
+        fields = ('name','address','picture')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -31,19 +31,19 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         UserProfile.objects.create(user=user, **profile_data)
         return user
 
-    def update(self, instance, validated_data):
-        profile_data = validated_data.pop('profile')
-        profile = instance.profile
+    # def update(self, instance, validated_data):
+    #     profile_data = validated_data.pop('profile')
+    #     profile = instance.profile
 
-        instance.email = validated_data.get('email', instance.email)
-        instance.save()
+    #     instance.email = validated_data.get('email', instance.email)
+    #     instance.save()
 
-        profile.name = profile_data.get('name', profile.name)
-        profile.address = profile_data.get('address', profile.address)
-        # profile.picture = profile_data.get('picture', profile.picture)
-        profile.save()
+    #     profile.name = profile_data.get('name', profile.name)
+    #     profile.address = profile_data.get('address', profile.address)
+    #     # profile.picture = profile_data.get('picture', profile.picture)
+    #     profile.save()
 
-        return instance
+    #     return instance
 
 class RestaurentSerializer(serializers.ModelSerializer):
     class Meta:

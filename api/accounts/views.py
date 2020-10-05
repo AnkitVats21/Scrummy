@@ -15,7 +15,6 @@ from django.shortcuts import get_object_or_404
 from random import randint
 from django.core.mail import send_mail
 from django.http import Http404
-    
 
 class VerifyOTP(APIView):
     queryset = OTP.objects.all()
@@ -106,7 +105,7 @@ class ResetPasswordOTP(APIView):
     def post(self, request):
         user_email = request.data.get("email")
         request_otp = request.data.get("otp")
-        print(user_email,request_otp)
+        #print(user_email,request_otp)
         #user = User.objects.filter(email__iexact = user_email)[0]
         try:
             obj = OTP.objects.filter(otp_email__iexact = user_email)[0]
@@ -131,7 +130,7 @@ class ForgotPassword(APIView):
     def post(self, request):
         request_email       = request.data.get('email')
         request_password    = request.data.get('password')
-        print(request_email, "pass:", request_password)
+        #print(request_email, "pass:", request_password)
         try:
             user = User.objects.filter(email__iexact = request_email)[0]
         except:
@@ -144,50 +143,47 @@ class ForgotPassword(APIView):
 
 
 class UserAccountsDetails(APIView):
-    permission_classes = (permissions.IsAuthenticated, )
+    #permission_classes = (permissions.IsAuthenticated, )
 
     def get_object(self, id):
-        
         try:
             return User.objects.get(id = id)
         except User.DoesNotExist:
-            return Response({'details':'user not found'})
-    def get(self, request, id):
-
+            raise Http404
+        
+    def get(self, request):
         user_id=request.user.id
-        data = {"error":"Access Denied"},
-        if user_id==id:
-            user = self.get_object(id=id)
-            serializer = UserSerializer(user)
-            return Response(serializer.data)
-        return Response( data, status = status.HTTP_400_BAD_REQUEST)
+        print(user_id)
+        user = self.get_object(id=str(user_id))
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+        # return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, id):
+class UserAccountUpdate(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = UserSerializer
+    def patch(self, request,id):
         user_id=request.user.id
-        data = {"error":"Access Denied"},
-        if user_id==id:
-            user = self.get_object(id=id)
-            serializer = UserSerializer(user, data = request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status= status.HTTP_200_OK)
-            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
-        return Response(data, status = status.HTTP_400_BAD_REQUEST)
+        user = User.objects.filter(id=id)
+        #user = self.get_object(id=id)
+        serializer = UserSerializer(request.user, data = request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status= status.HTTP_200_OK)
+        return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
-        data = {"error":"Access Denied"},
         user_id=request.user.id
-        if user_id==id:
-            user = self.get_object(id)
-            user.delete()
-            return Response(status = status.HTTP_204_NO_CONTENT)
-        return Response(data , status = status.HTTP_400_BAD_REQUEST)
+        user = User.objects.get(id=id)# self.get_object(id)
+        user.delete()
+        return Response(data={"details":"account deleted"},status = status.HTTP_204_NO_CONTENT)
+        # return Response(data , status = status.HTTP_400_BAD_REQUEST)
 
     
 class GenerateOTP(APIView):
     def post(self, request):
         user_email = request.data.get("email")
-        print(user_email)
+        #print(user_email)
         try:
             user= User.objects.filter(email__iexact = user_email)[0]
         except:
@@ -383,7 +379,7 @@ class AddToCartOrRemove(APIView):
             order = cart_qs[0]
             if order.items.filter(item__pk=item.pk).exists():
                 order_item = OrderItem.objects.filter(item=item, user=request.user, ordered=False)[0]
-                print(order_item)
+                #print(order_item)
                 order_item.delete()
                 return Response(data={'details':'item removed from your cart'})
             else:
@@ -416,7 +412,7 @@ class AddFoodItem(APIView):
         except:
             raise Http404
         
-        print(request.data)
+        #print(request.data)
         if user.restaurent:
             food = Food.create()
             return Response(serializer.data)

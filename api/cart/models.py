@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime
 from accounts.models import User, Food
+from django.core.validators import RegexValidator
 
 
 class OrderItem(models.Model):
@@ -59,7 +60,8 @@ class MyOrder(models.Model):
     
 class CheckoutAddress(models.Model):
     user            = models.ForeignKey(User, on_delete=models.CASCADE)
-    
+    phone_regex     = RegexValidator(regex=r'^\+?1?\d{9,14}$', message="Phone number must be entered in the format: '+999999999'. Up to 14 digits allowed.")
+    phone           = models.CharField(validators=[phone_regex], max_length=17, blank=True)  
     address         = models.CharField(max_length=100)
     zip             = models.CharField(max_length=100)
 

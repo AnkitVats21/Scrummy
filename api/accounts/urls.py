@@ -15,8 +15,8 @@ app_name = 'accounts'
 
 urlpatterns = [
     path('api/signup/',  views.CreateUserAccount.as_view(),  name="createaccount"),
-    path('api/accounts/', views.UserAccountsList.as_view()),
-    path('api/accounts/<int:id>/', views.UserAccountsDetails.as_view()),
+    path('api/accounts/', views.UserAccountsDetails.as_view()),
+    path('api/updateaccount/<id>/', views.UserAccountUpdate.as_view()),
     path('api/otp_verified/', views.CheckOTPVerifiedStatus.as_view(), name='ifverified'),
     path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
     path('api/login/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_view'),
@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/passresetotp/', views.ResetPasswordOTP.as_view()),
     path('api/otp/', views.GenerateOTP.as_view()),
     path('api/verify_otp/',  views.VerifyOTP.as_view()),
+    #path('api/accounts/', views.UserAccountsList.as_view()),
 ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
 
 #fooditems related urlpatterns

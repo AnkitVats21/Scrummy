@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework import permissions
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from .models import Cart,MyOrder,OrderItem,CheckoutAddress,Payment
-from .serializers import CartSerializer, OrderItemSerializer# ,MyOrderSerializer
+from .serializers import CartSerializer, OrderItemSerializer, CheckoutAddressSerializer# ,MyOrderSerializer
 from accounts.serializers import FoodSerializer
 from django.http import Http404
 from accounts.models import Food, User
@@ -122,3 +122,45 @@ class OrderItemListView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CheckoutAddressView(APIView):
+    queryset            = CheckoutAddress.objects.all()
+    serializer_class    = CheckoutAddressSerializer
+    #permission_classes  = (permissions.IsAuthenticated,)
+
+    def verify_user(self,request):
+        user = User.objects.filter(email__iexact=str(request.user))
+        return int(user[0].id)
+
+    def get(self,request):
+        try:
+            user = User.objects.filter(email=str(request.user))
+            id = self.verify_user(request)
+        except:
+            raise Http404
+        address = CheckoutAddress.objects.filter(user=id)
+        serializer = CheckoutAddressSerializer(address,many=True)
+        return Response(serializer.data)
+
+    def post(self,request):
+        address     = request.data
+        serializer  = CheckoutAddressSerializer(data=address)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data={"detail":"invalid data"})
+
+    def delete(self, request):
+        add_id = request.data.get("id")
+        try:
+            add = CheckoutAddress.objects.filter(id=add_id)
+        except:
+            raise Http404
+        add.delete()
+        return Response(data={'details':'address deleted'})
+
+
+# class CheckoutAddressView(APIView):
+#     queryset            = CheckoutAddress.objects.all()
+#     serializer_class    = CheckoutAddressSerializer
+#     # def get(self,request):
