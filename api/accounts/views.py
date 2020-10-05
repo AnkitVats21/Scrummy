@@ -378,25 +378,23 @@ class RestaurentList(APIView):
             queryset = Restaurent.objects.filter(user=id1)
         except:
             raise Http404
-        print(queryset)
+        # print(queryset)
         serializer = RestaurentSerializer(queryset, many= True,context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
     def post(self, request):
+        id1=self.verify_user(request)
         data = request.data
-        #print(request.user)
         try:
-            user = User.objects.filter(email=str(request.user))[0]
+            user = User.objects.filter(id=id1)[0]
         except:
             raise Http404
-        #print(user)
         if user.restaurent:
             serializer=RestaurentSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(data={'details':'user is not restaurent owner'},status=status.HTTP_400_BAD_REQUEST)
-
-        
+   
         
 from .serializers import RestaurentSerializer
 
@@ -414,14 +412,20 @@ class RestaurentView(APIView):
         
 class AddFoodItem(APIView):
     serializer_class = FoodSerializer
+    def verify_user(self,request):
+        user = User.objects.filter(email__iexact=str(request.user))
+        return int(user[0].id)
     def post(self, request):
+        id1=self.verify_user(request)
         try:
-            user = User.objects.get(email=request.user)[0]
+            user = User.objects.get(id=id1)[0]
         except:
             raise Http404
-        
         #print(request.data)
         if user.restaurent:
-            food = Food.create()
-            return Response(serializer.data)
-        #return Response(data=,status=status.HTTP_400_BAD_REQUEST)"""data={'details':'bad request'}"""
+            serializer = FoodSerializer(data=request.data,context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={"details":"user is not provider"},status=status.HTTP_400_BAD_REQUEST)

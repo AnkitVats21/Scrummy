@@ -63,9 +63,6 @@ class RestaurentSerializer(serializers.ModelSerializer):
         restaurent.save()
         return restaurent
 
-
-
-
 class FoodSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="accounts:food-detail")
     class Meta:
@@ -75,3 +72,4 @@ class FoodSerializer(serializers.HyperlinkedModelSerializer):
         'rating','offer','category',
         'cuisine','delivery_time','rest_food_id','restname',)
     # def create(self, validated_data):
+# 'rest_food',
