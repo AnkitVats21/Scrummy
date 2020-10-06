@@ -10,7 +10,7 @@ from .serializers import CartSerializer, OrderItemSerializer, CheckoutAddressSer
 from accounts.serializers import FoodSerializer
 from django.http import Http404
 from accounts.models import Food, User
-
+from django.core.mail import send_mail
 from cart import serializers
 
 #Create your views here.
@@ -69,9 +69,14 @@ class OrderItemView(APIView):
 
     def post(self, request, pk):
         request_data=request.data
+        try:
+            user_email=request_data.get('email')
+        except:
+            pass
         user = request.user
         id1=self.verify_user(request)
-        request_data['user']=id1
+        request_data = request_data.copy()
+        request_data['user'] = id1
         item=OrderItem.objects.filter(user__exact = id1).filter(ordered=False)
         if pk=='checkout':
             for i in range(len(item)):
@@ -82,6 +87,9 @@ class OrderItemView(APIView):
             serializer = PaymentSerializer(data=request_data)
             if serializer.is_valid():
                 serializer.save()
+                if user_email:
+                    body = ("Hello! Your order for {} items has been successfully placed.").format(len(item))
+                    send_mail('Order Confirmation', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)       
             return Response(status=status.HTTP_400_BAD_REQUEST)    
 
@@ -93,7 +101,7 @@ class CheckOrderStatus(APIView):
     def get(self, request, pk):
         id1     =self.verify_user(request)
         try:
-            orders  = OrderItem.objects.filter(user=id1).filter(item=pk)
+            orders  = OrderItem.objects.filter(user=id1).filter(item=pk).filter(ordered=False)
             if orders.exists():
                 return Response(data={"details":"item in your cart"}, status=status.HTTP_302_FOUND)
             return Response(data={"details":"item not in your cart"}, status=status.HTTP_404_NOT_FOUND)
@@ -192,16 +200,16 @@ class PaymentView(APIView):
 #         zip=serializer.data.zip)
 #         return Response(serializer.data,status=status.HTTP_201_CREATED)
 
-# class CartView(APIView):
-#     serializer_class = CartSerializer
-#     def get_object(self, pk):
-#         try:
-#             return Cart.objects.get(pk=pk)
-#         except Cart.DoesNotExist:
-#             raise Http404 
+class CartView(APIView):
+    serializer_class = CartSerializer
+    def get_object(self, pk):
+        try:
+            return Cart.objects.get(pk=pk)
+        except Cart.DoesNotExist:
+            raise Http404 
 
-#     def get(self, request, pk):
-#         cart = self.get_object(pk=pk)
-#         serializer = CartSerializer(cart)
-#         return Response(serializer.data,status=status.HTTP_200_OK)
-#         #return Response( serializers.errors, status = status.HTTP_400_BAD_REQUEST)
+    def get(self, request, pk):
+        cart = self.get_object(pk=pk)
+        serializer = CartSerializer(cart)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+        #return Response( serializers.errors, status = status.HTTP_400_BAD_REQUEST)
