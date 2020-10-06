@@ -10,6 +10,7 @@ class OrderItem(models.Model):
     ordered = models.BooleanField(default=False)
     item = models.ForeignKey(Food, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
+    ordered_date= models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.quantity} of {self.item.name}"
@@ -29,7 +30,6 @@ class Cart(models.Model):
     user        = models.ForeignKey(User, on_delete=models.CASCADE)
     items       = models.ManyToManyField(OrderItem)
     start_date  = models.DateTimeField(auto_now_add=True,blank=True,null=True)
-    ordered_date= models.DateTimeField(blank=True,null=True)
     ordered     = models.BooleanField(default=False)
     def __str__(self):
         return self.user.email
@@ -47,15 +47,14 @@ class Cart(models.Model):
     
 
 
-class MyOrder(models.Model):
-    user        = models.OneToOneField(User, on_delete=models.CASCADE)
-    foods       = models.ManyToManyField(Food)
-    quantity    = models.IntegerField(default=1)
-    order_time  = models.DateTimeField(auto_now_add=True, null=True)
-    ordered     = models.BooleanField(default=False)
+# class MyOrder(models.Model):
+#     user        = models.OneToOneField(User, on_delete=models.CASCADE)
+#     foods       = models.ForeignKey(OrderItem)
+#     order_time  = models.DateTimeField(auto_now_add=True, null=True)
+#     ordered     = models.BooleanField(default=False)
 
-    def __str__(self):
-        return self.user.email
+#     def __str__(self):
+#         return self.user.email
 
     
 class CheckoutAddress(models.Model):

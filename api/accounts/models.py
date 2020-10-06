@@ -158,6 +158,7 @@ Cuisine_choices =(
         ('Italian', "Italian"),
         ('French', "French"),
         ('Punjabi', "Punjabi"),
+        ('Sweets','Sweets'),
     )
 
 class Food(models.Model):

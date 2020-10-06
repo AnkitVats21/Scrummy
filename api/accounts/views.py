@@ -136,7 +136,7 @@ class ForgotPassword(APIView):
         return Response(data={"details":"password reset"}, status = status.HTTP_200_OK)
 
 class UserAccountsDetails(APIView):
-    #permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.IsAuthenticated, )
 
     def get_object(self, id):
         try:
@@ -283,6 +283,14 @@ class FoodView(APIView):
 
     def get(self, request, pk):
 
+        try:
+            restaurent_name = Restaurent.objects.filter(restaurent_name__icontains=pk)
+            rest_id         = restaurent_name[0].id
+            food = Food.objects.filter(rest_food=int(rest_id))
+            serializer = FoodSerializer(food, many=True, context={'request':request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            pass
         try:
             food    = Food.objects.filter(cuisine__iexact=pk)
             if not food:

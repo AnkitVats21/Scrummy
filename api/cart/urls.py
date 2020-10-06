@@ -4,9 +4,9 @@ from django.urls import path
 from rest_framework import routers
 
 urlpatterns = [
-    path('cart/<pk>/', views.CartView.as_view()),
-    path('api/cart/<pk>/', views.OrderItemView.as_view()),
-    path('orderitemslist/', views.OrderItemListView.as_view()),
-    path('checkoutaddress/', views.CheckoutAddressView.as_view()),
-    path('payment/', views.PaymentView.as_view())
+    path('api/cart/<pk>/', views.OrderItemView.as_view()), #if pk=='ordered' my order view will be shown 
+    path('api/checkoutaddress/', views.CheckoutAddressView.as_view()),
+    path('api/payment/', views.PaymentView.as_view())
+    #path('cart/<pk>/', views.CartView.as_view()),
+    #path('orderitemslist/', views.OrderItemListView.as_view()),
  ]

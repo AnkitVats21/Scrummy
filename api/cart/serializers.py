@@ -1,4 +1,4 @@
-from .models import Cart, MyOrder, OrderItem, CheckoutAddress, Payment
+from .models import Cart, OrderItem, CheckoutAddress, Payment # MyOrder,
 from rest_framework import serializers
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -27,10 +27,6 @@ class CartSerializer(serializers.ModelSerializer):
         'ordered_date','ordered',
         'get_total_price')
 
-# class MyOrderSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model   = MyOrder
-#         fields = ('id',)
 
 class CheckoutAddressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,3 +37,9 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model   = Payment
         fields  = '__all__'
+
+
+# class MyOrderSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model   = MyOrder
+#         fields = ('id',)
