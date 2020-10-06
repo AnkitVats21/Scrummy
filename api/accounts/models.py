@@ -165,7 +165,7 @@ class Food(models.Model):
     rest_food   = models.ForeignKey(Restaurent, on_delete=models.CASCADE, related_name='restaurent_food', blank=True, null=True)
     name        = models.CharField(max_length=100, blank=False)
     price       = models.IntegerField(blank=False)
-    rating      = models.IntegerField(choices=Rating_choices, default=5)
+    rating      = models.CharField(max_length=20, default="5 1")
     image       = models.ImageField(max_length=2000,blank=True,null=True)
     delivery_time   = models.IntegerField(default=60,blank=False)
     cooking_time   = models.IntegerField(default=60,blank=True)
@@ -177,5 +177,12 @@ class Food(models.Model):
         return self.name
 
     def restname(self):
-        print(self.rest_food)
+        # print(self.rest_food)
         return self.rest_food.restaurent_name
+    def ratings(self):
+        a=self.rating
+        b=a.split()
+        x=b[0]
+        y=b[1]
+        return str(int(x)/int(y))
+

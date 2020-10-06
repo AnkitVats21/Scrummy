@@ -328,7 +328,7 @@ class AddToCartOrRemove(APIView):
                 order_item.quantity += 1
                 order_item.save()
                 data = ("item quantity increased to {} in the cart.").format(order_item.quantity)
-                return Response(data={"details":data},status=status.HTTP_201_CREATED)
+                return Response(data={"details":data,"quantity":order_item.quantity},status=status.HTTP_201_CREATED)
             else:
                 order.items.add(order_item)
                 return Response(data={'details':"item added to cart"},status=status.HTTP_201_CREATED)
@@ -397,12 +397,23 @@ class AddToCartOrRemove(APIView):
                 else:
                     order_item.delete()
                 data = ("item quantity decreased to {} in the cart.").format(order_item.quantity)
-                return Response(data={"details":data},status=status.HTTP_201_CREATED)
+                return Response(data={"details":data,"quantity":order_item.quantity},status=status.HTTP_201_CREATED)
                 #return Response(data={"details":"Food Item quantity updated"}, status= status.HTTP_200_OK)
             else:
                 return Response(data={"details":"Food Item does not exists"}, status=status.HTTP_410_GONE)
         return Response(data={"details":"You do not have an order"}, status=status.HTTP_404_NOT_FOUND)
-
+    def put(self,request,pk):
+        item = get_object_or_404(Food, pk=pk)
+        rating = request.data.get("rating")
+        a=item.rating
+        b=a.split()
+        x=int(b[0])+int(rating)
+        y=int(b[1])+1
+        data=x/y
+        a=str(x)+" "+str(y)
+        item.rating=a
+        item.save()
+        return Response(data={"rating":data},status=status.HTTP_202_ACCEPTED)
 ######################################
 #   """"""""""""""""""""""""""""     #
 #   add food item in restaurent      #

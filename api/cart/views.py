@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import permissions
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
-from .models import Cart, OrderItem, CheckoutAddress, Payment
-from .serializers import CartSerializer, OrderItemSerializer, CheckoutAddressSerializer, PaymentSerializer
+from .models import Cart, OrderItem, CheckoutAddress, Payment, MyOrder
+from .serializers import CartSerializer, OrderItemSerializer, CheckoutAddressSerializer, PaymentSerializer, MyOrderSerializer
 from accounts.serializers import FoodSerializer
 from django.http import Http404
 from accounts.models import Food, User
@@ -70,7 +70,7 @@ class OrderItemView(APIView):
     def post(self, request, pk):
         request_data=request.data
         try:
-            user_email=request_data.get('email')
+            user_email=str(request.user)
         except:
             pass
         user = request.user
@@ -78,18 +78,32 @@ class OrderItemView(APIView):
         request_data = request_data.copy()
         request_data['user'] = id1
         item=OrderItem.objects.filter(user__exact = id1).filter(ordered=False)
+#######################################################################
+#                      for checkout                        
+##############################################################
         if pk=='checkout':
             for i in range(len(item)):
                 food=item[i]
-                food.ordered=True
+                obj = MyOrder.objects.create(user=food.user,
+                ordered=True, item = food.item, quantity = food.quantity)
+                obj.save()
+                #food.ordered=True
                 # food.ordered_date=date
-                food.save()
+                #food.save()
+                #orderserializer = MyOrderSerializer(data=data, many = True)
+                #if orderserializer.is_valid():
+                #    orderserializer.save()
+                #    return Response(orderserializer.data)
+                #return Response(orderserializer.errors)
+            item.delete()
+            
             serializer = PaymentSerializer(data=request_data)
             if serializer.is_valid():
                 serializer.save()
+                print(user_email)
                 if user_email:
                     body = ("Hello! Your order for {} items has been successfully placed.").format(len(item))
-                    send_mail('Order Confirmation', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
+                    #send_mail('Order Confirmation', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)       
             return Response(status=status.HTTP_400_BAD_REQUEST)    
 
@@ -157,6 +171,20 @@ class PaymentView(APIView):
         serializer = PaymentSerializer(data, many=True)
         return Response(serializer.data)
 
+class CartView(APIView):
+    serializer_class = CartSerializer
+    def get_object(self, pk):
+        try:
+            return Cart.objects.get(pk=pk)
+        except Cart.DoesNotExist:
+            raise Http404 
+
+    def get(self, request, pk):
+        cart = self.get_object(pk=pk)
+        serializer = CartSerializer(cart)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+        #return Response( serializers.errors, status = status.HTTP_400_BAD_REQUEST)
+
 # class OrderItemListView(APIView):
 #     serializer_class = OrderItemSerializer
 
@@ -199,17 +227,3 @@ class PaymentView(APIView):
 #         address=serializer.data.address, 
 #         zip=serializer.data.zip)
 #         return Response(serializer.data,status=status.HTTP_201_CREATED)
-
-class CartView(APIView):
-    serializer_class = CartSerializer
-    def get_object(self, pk):
-        try:
-            return Cart.objects.get(pk=pk)
-        except Cart.DoesNotExist:
-            raise Http404 
-
-    def get(self, request, pk):
-        cart = self.get_object(pk=pk)
-        serializer = CartSerializer(cart)
-        return Response(serializer.data,status=status.HTTP_200_OK)
-        #return Response( serializers.errors, status = status.HTTP_400_BAD_REQUEST)

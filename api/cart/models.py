@@ -48,15 +48,15 @@ class Cart(models.Model):
     
 
 
-# class MyOrder(models.Model):
-#     user        = models.OneToOneField(User, on_delete=models.CASCADE)
-#     foods       = models.ForeignKey(OrderItem)
-#     order_time  = models.DateTimeField(auto_now_add=True, null=True)
-#     ordered     = models.BooleanField(default=False)
+class MyOrder(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    ordered = models.BooleanField(default=False)
+    ordered_date= models.DateTimeField(auto_now=True, blank=True,null=True)
+    item = models.ForeignKey(Food, on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
 
-#     def __str__(self):
-#         return self.user.email
-
+    def __str__(self):
+        return f"{self.quantity} of {self.item.name}"
     
 class CheckoutAddress(models.Model):
     user            = models.ForeignKey(User, on_delete=models.CASCADE)

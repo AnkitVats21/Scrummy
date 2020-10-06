@@ -69,7 +69,7 @@ class FoodSerializer(serializers.HyperlinkedModelSerializer):
         model   = Food
         fields = ('id','url','name',
         'image','price',
-        'rating','offer','category',
+        'rating','ratings','offer','category',
         'cuisine','delivery_time','rest_food_id','restname',)
     # def create(self, validated_data):
 # 'rest_food',

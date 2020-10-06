@@ -4,7 +4,7 @@ from django.urls import path
 from rest_framework import routers
 
 urlpatterns = [
-    path('api/cart/<pk>/', views.OrderItemView.as_view()), #if pk=='ordered' my order view will be shown 
+    path('api/cart/<pk>/', views.OrderItemView.as_view()), #if pk=='ordered' my order view will be shown <pk>='checkout' for placing order 
     path('api/checkoutaddress/', views.CheckoutAddressView.as_view()),
     path('api/payment/', views.PaymentView.as_view()),
     path('api/orderstatus/<pk>/', views.CheckOrderStatus.as_view()),
