@@ -83,7 +83,22 @@ class OrderItemView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)       
-            return Response(status=status.HTTP_400_BAD_REQUEST)         
+            return Response(status=status.HTTP_400_BAD_REQUEST)    
+
+class CheckOrderStatus(APIView):
+    def verify_user(self,request):
+        user = User.objects.filter(email__iexact=str(request.user))
+        return int(user[0].id)
+
+    def get(self, request, pk):
+        id1     =self.verify_user(request)
+        try:
+            orders  = OrderItem.objects.filter(user=id1).filter(item=pk)
+            if orders.exists():
+                return Response(data={"details":"item in your cart"}, status=status.HTTP_302_FOUND)
+            return Response(data={"details":"item not in your cart"}, status=status.HTTP_404_NOT_FOUND)
+        except:
+            raise Http404
 
 
 class CheckoutAddressView(APIView):

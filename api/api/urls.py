@@ -6,6 +6,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^', include('accounts.urls')),
     url(r'^', include('cart.urls')),
+    url(r'^', include('restaurent.urls')),
 ]
 urlpatterns += [
     #url(r'^', include(router.urls)),

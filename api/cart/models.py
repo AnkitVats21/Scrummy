@@ -7,8 +7,8 @@ from django.core.validators import RegexValidator
 
 class OrderItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    ordered = models.BooleanField(default=False)
     item = models.ForeignKey(Food, on_delete=models.CASCADE)
+    ordered = models.BooleanField(default=False)
     quantity = models.IntegerField(default=1)
     ordered_date= models.DateTimeField(auto_now=True)
 
@@ -24,7 +24,10 @@ class OrderItem(models.Model):
    
     def delivery_time(self):
         return self.item.delivery_time
-    
+    def get_restaurent_id(self,id):
+        if self.item.rest_food==id:
+            return self.item.rest_food
+
 
 class Cart(models.Model):
     user        = models.ForeignKey(User, on_delete=models.CASCADE)
