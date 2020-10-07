@@ -61,6 +61,10 @@ class MyOrder(models.Model):
 
     def __str__(self):
         return f"{self.quantity} of {self.item.name}"
+    def rest_name(self):
+        return self.restaurant.restaurent_name
+    def food_name(self):
+        return self.item.name
     
 class CheckoutAddress(models.Model):
     user            = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -77,6 +81,7 @@ class Payment(models.Model):
     restaurant  = models.ForeignKey(Restaurent,on_delete=models.SET_NULL, null=True)
     user        = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     amount      = models.FloatField()
+    discounted_price=models.FloatField(default=0)
     timestamp   = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -43,4 +43,4 @@ class MyOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model   = MyOrder
         fields  = ('id','user',
-        'ordered','item', 'quantity','restaurant')
+        'ordered','item', 'quantity','food_name')

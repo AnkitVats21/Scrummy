@@ -398,8 +398,7 @@ class AddToCartOrRemove(APIView):
                     return Response({"error":"unexpected error"})
         except:
             pass
-        
-        
+
         if prevOrder[0].restaurant==item.rest_food:
             order_item, created = OrderItem.objects.get_or_create(restaurant=item.rest_food, item = item, user = request.user, ordered = True)
             cart_qs = Cart.objects.filter(user=request.user, ordered=False)
@@ -409,11 +408,13 @@ class AddToCartOrRemove(APIView):
                     return Response(data={'details':"item already in your cart"},status=status.HTTP_201_CREATED)
                 else:
                     order.items.add(order_item)
+                    print(order_item)
                     return Response(data={'details':"item added to cart"},status=status.HTTP_201_CREATED)
             else:
                 ordered_date = timezone.now()
                 order       = Cart.objects.create(user=request.user, ordered_date=ordered_date)
                 order.items.add(order_item)
+                print(order_item)
                 return Response(data={"details":"item added to your cart"})
         return Response(data={"details":"cannot add items from two different restaurant at a time want to move the same into the wishlist or continue with it and moving the previous ones into wish list."})
 
@@ -434,7 +435,7 @@ class AddToCartOrRemove(APIView):
         if cart_qs.exists():
             order = cart_qs[0]
             if order.items.filter(item__pk=item.pk).exists():
-                order_item = OrderItem.objects.filter(item=item, user=request.user, ordered=False)[0]
+                order_item = OrderItem.objects.filter(item=item, user=request.user, ordered=True)[0]
                 #print(order_item)
                 order_item.delete()
                 return Response(data={'details':'item removed from your cart'})

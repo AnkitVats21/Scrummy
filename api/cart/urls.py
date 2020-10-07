@@ -9,5 +9,5 @@ urlpatterns = [
     path('api/payment/', views.PaymentView.as_view()),
     path('api/orderstatus/<pk>/', views.CheckOrderStatus.as_view()),
     path('cart/<pk>/', views.CartView.as_view()),
-    #path('orderitemslist/', views.OrderItemListView.as_view()),
+    path('api/myorders/', views.MyOrderView.as_view()),
  ]

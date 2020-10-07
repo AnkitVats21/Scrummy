@@ -12,6 +12,7 @@ from django.http import Http404
 from accounts.models import Food, User, Restaurent
 from django.core.mail import send_mail
 from cart import serializers
+from django.shortcuts import render
 
 #Create your views here.        
 
@@ -30,9 +31,9 @@ class OrderItemView(APIView):
 
     def get(self, request, pk):
         id1=self.verify_user(request)
-        if pk=='ordered':
+        if pk=='wishlist':
             try:
-                item=MyOrder.objects.filter(user__exact = id1).filter(ordered=True)
+                item=OrderItem.objects.filter(user__exact = id1).filter(ordered=False)
             except:
                 raise Http404
             if item.exists():
@@ -48,10 +49,10 @@ class OrderItemView(APIView):
                 # serializer.data[0]['payment']=pay.data
                 return Response(serializer.data)
             return Response(data={'details':'data not found'},status=status.HTTP_400_BAD_REQUEST)
-        else:
-            #item=OrderItem.objects.filter(user__exact = id1).filter(ordered=False)
+        if pk=='show':
+    
             try:
-                item=OrderItem.objects.filter(user__exact = id1).filter(ordered=False)
+                item=OrderItem.objects.filter(user__exact = id1).filter(ordered=True)
             except:
                 raise Http404
             if item.exists():
@@ -64,48 +65,83 @@ class OrderItemView(APIView):
                     serializer.data[i]['restaurent']=food_item.data['restname']
                 return Response(serializer.data)
             return Response(data={'details':'data not found'},status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={"error":"bad request"}, status=status.HTTP_400_BAD_REQUEST)
 
+##############################################################
+#                      for checkout                          #
+##############################################################
     def post(self, request, pk):
         request_data=request.data
         try:
             user_email=str(request.user)
         except:
             pass
-        user = request.user
+        user = request.user #not needed yet
         id1=self.verify_user(request)
         request_data = request_data.copy()
         request_data['user'] = id1
-        item=OrderItem.objects.filter(user__exact = id1).filter(ordered=False)
-#######################################################################
-#                      for checkout                        
-##############################################################
-        if pk=='checkout':
+        try:
+            item=OrderItem.objects.filter(user__exact = id1).filter(ordered=True)
+        except:
+            raise Http404
+        if pk=='checkout' and len(item):
+            amount=0
+            discounted_price=0
+            order_summary="S. No.\tItem Name\t\tPrice\t\tDiscounted Price\n"
+            o_d={
+            "item_name":[],
+            "quantity":[],
+            "price":[],
+            "discount_price":[]
+            }
             for i in range(len(item)):
                 food=item[i]
-                obj = MyOrder.objects.create(user=food.user,
-                ordered=True, item = food.item, quantity = food.quantity)
+                a=int(food.quantity)*int(food.item.price)
+                amount += a
+                b=int(food.quantity)*int(food.item.price)*((100-int(food.item.offer))/100)
+                discounted_price += b
+                obj = MyOrder.objects.create(user=food.user, ordered=True, item = food.item, quantity = food.quantity)
                 obj.save()
+                o_d["item_name"].append(food.item_name())
+                o_d["quantity"].append(food.quantity)
+                o_d["price"].append(food.item.price)
+                o_d["discount_price"].append(b)
+                order_summary += ("{}.\t{}\t\t{}x{}={}\t{}\n").format(i+1,str(food.item_name()), str(food.quantity),str(food.item.price),a,b )
+            o_d["total"]=discounted_price
+            context= {
+            'ordersummary': o_d
+            }
+            return render(request,'email_template.html',context)
+            print(o_d)
+            order_summary += ("\t\t\t\tTotal\t\t{}\n").format(discounted_price)
+            #print(amount," ",discounted_price)
             restname=item[0].restaurant
-            print(restname)
             id2 = Restaurent.objects.filter(restaurent_name=restname)[0].id
-            serializer = PaymentSerializer(data=request_data)
             request_data['restaurant']=id2
-            print(id2)
-            item.delete()
+            request_data['amount']=amount
+            request_data['discounted_price']=discounted_price
+            serializer = PaymentSerializer(data=request_data)
+            #item.delete()
             if serializer.is_valid():
                 serializer.save()
                 print(user_email)
                 if user_email:
-                    body = ("Hello! Your order for {} items has been successfully placed.").format(len(item))
-                    #send_mail('Order Confirmation', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
+                    head = ("Your Scrummy order from {}").format(restname)
+                    print(head)
+                    body = ("Hello {}!\nYour order summary\nOrder ID: SCN00{} \n{}\nWe hope you have enjoyed your meal from {}.").format(request.user.profile.name,serializer.data.get('id'),order_summary,restname)
+                    print(body)
+                    #send_mail(head, str(body), 'in.scrummy@gmail.com', [user_email], fail_silently = False)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)       
             return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)    
+        return Response(data={"details":"please add some food item in your cart before you checkout"} ,status=status.HTTP_400_BAD_REQUEST)    
+
+
 
 class CheckOrderStatus(APIView):
     def verify_user(self,request):
         user = User.objects.filter(email__iexact=str(request.user))
         return int(user[0].id)
-
+    #pk is the id of the food
     def get(self, request, pk):
         id1     =self.verify_user(request)
         try:
@@ -178,45 +214,41 @@ class CartView(APIView):
         return Response(serializer.data,status=status.HTTP_200_OK)
         #return Response( serializers.errors, status = status.HTTP_400_BAD_REQUEST)
 
-# class OrderItemListView(APIView):
-#     serializer_class = OrderItemSerializer
+class MyOrderView(APIView):
+    serializer_class = MyOrderSerializer
 
-#     # def get_object(self, id):
-#     #     try:
-#     #         return OrderItem.objects.get(id = id)
-#     #     except Cart.DoesNotExist:
-#     #         raise Http404 
+    def verify_user(self,request):
+        user = User.objects.filter(email__iexact=str(request.user))
+        return int(user[0].id)
 
-#     def get(self, request):
-#         item = OrderItem.objects.all()
-#         serializer = OrderItemSerializer(item, many=True,context={'request': request})
-#         return Response(serializer.data)
+    def get_food_data(self,data,request):
+        food = FoodSerializer(data,context={'request': request})
+        return food
 
-#     def post(self, request):
-#         data = request.data
-#         serializer  = OrderItemSerializer(data=data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request):
+        id1     =self.verify_user(request)
+        # item = OrderItem.objects.filter(id=id1)
+        try:
+            item=MyOrder.objects.filter(user__exact = id1).filter(ordered=True)
+        except:
+            raise Http404
+        if item.exists():
+            serializer = MyOrderSerializer(item, many=True,context={'request': request})
+            for i in range(len(item)):
+                data=item[i].item
+                food_item = self.get_food_data(data,request)
+                serializer.data[i]['image']=food_item.data['image']
+                serializer.data[i]['offer']=food_item.data['offer']
+                serializer.data[i]['restaurent']=food_item.data['restname']
+            return Response(serializer.data, status=status.HTTP_302_FOUND)
+        return Response(data={'details':'data not found'},status=status.HTTP_404_NOT_FOUND)
+        # serializer = MyOrderSerializer(item, many=True,context={'request': request})
+        # return Response(serializer.data)
 
-
-
-# class CheckoutView(APIView):
-#     def get(self, request):
-#         try:
-#             address = CheckoutAddress.objects.filter(user=request.user)
-#         except:
-#             return Response(data={"details":"You don't have any saved address. Please add new one."},)
-#         serializer = CheckoutAddressSerializer(address, many=True)
-#         return Response(serializer.data, status=status.HTTP_200_OK)
-        
-
-#     def post(self, request):
-#         #print(request.data, request.user)
-#         serializer = serializers.CheckoutAddressSerializer(request.data)
-#         #print(serializer)
-#         address = CheckoutAddress.objects.create(user=request.user, 
-#         address=serializer.data.address, 
-#         zip=serializer.data.zip)
-#         return Response(serializer.data,status=status.HTTP_201_CREATED)
+    # post request for developers use only
+        data = request.data
+        serializer  = OrderItemSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
