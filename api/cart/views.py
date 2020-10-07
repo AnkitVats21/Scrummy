@@ -9,13 +9,11 @@ from .models import Cart, OrderItem, CheckoutAddress, Payment, MyOrder
 from .serializers import CartSerializer, OrderItemSerializer, CheckoutAddressSerializer, PaymentSerializer, MyOrderSerializer
 from accounts.serializers import FoodSerializer
 from django.http import Http404
-from accounts.models import Food, User
+from accounts.models import Food, User, Restaurent
 from django.core.mail import send_mail
 from cart import serializers
 
-#Create your views here.
-
-        
+#Create your views here.        
 
 class OrderItemView(APIView):
     query_set           =   OrderItem.objects.all()
@@ -34,11 +32,11 @@ class OrderItemView(APIView):
         id1=self.verify_user(request)
         if pk=='ordered':
             try:
-                item=OrderItem.objects.filter(user__exact = id1).filter(ordered=True)
+                item=MyOrder.objects.filter(user__exact = id1).filter(ordered=True)
             except:
                 raise Http404
             if item.exists():
-                serializer = OrderItemSerializer(item, many=True,context={'request': request})
+                serializer = MyOrderSerializer(item, many=True,context={'request': request})
                 for i in range(len(serializer.data)):
                     data        =item[i].item
                     food_item   = self.get_food_data(data,request)
@@ -87,17 +85,13 @@ class OrderItemView(APIView):
                 obj = MyOrder.objects.create(user=food.user,
                 ordered=True, item = food.item, quantity = food.quantity)
                 obj.save()
-                #food.ordered=True
-                # food.ordered_date=date
-                #food.save()
-                #orderserializer = MyOrderSerializer(data=data, many = True)
-                #if orderserializer.is_valid():
-                #    orderserializer.save()
-                #    return Response(orderserializer.data)
-                #return Response(orderserializer.errors)
-            item.delete()
-            
+            restname=item[0].restaurant
+            print(restname)
+            id2 = Restaurent.objects.filter(restaurent_name=restname)[0].id
             serializer = PaymentSerializer(data=request_data)
+            request_data['restaurant']=id2
+            print(id2)
+            item.delete()
             if serializer.is_valid():
                 serializer.save()
                 print(user_email)
@@ -105,7 +99,7 @@ class OrderItemView(APIView):
                     body = ("Hello! Your order for {} items has been successfully placed.").format(len(item))
                     #send_mail('Order Confirmation', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)       
-            return Response(status=status.HTTP_400_BAD_REQUEST)    
+            return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)    
 
 class CheckOrderStatus(APIView):
     def verify_user(self,request):
@@ -121,7 +115,6 @@ class CheckOrderStatus(APIView):
             return Response(data={"details":"item not in your cart"}, status=status.HTTP_404_NOT_FOUND)
         except:
             raise Http404
-
 
 class CheckoutAddressView(APIView):
     queryset            = CheckoutAddress.objects.all()
@@ -160,7 +153,7 @@ class CheckoutAddressView(APIView):
         return Response(data={'details':'address deleted'})
 
 class PaymentView(APIView):
-    permission_classes=(permissions.IsAuthenticated)
+    permission_classes=(permissions.IsAuthenticated,)
     serializer_class = PaymentSerializer
     def verify_user(self,request):
         user = User.objects.filter(email__iexact=str(request.user))

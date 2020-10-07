@@ -122,11 +122,19 @@ class Restaurent(models.Model):
     restaurent_address  = models.CharField(max_length=200, blank=False)
     zip_code     = models.CharField(max_length=6, blank=False)
     description = models.CharField(max_length=500, blank=False)
+    wallpaper   = models.ImageField(max_length=2000, blank=True,null=True)
+    rating      = models.CharField(default="5 1", max_length=30)
     def __str__(self):
         return self.restaurent_name
         
     def owner(self):
         return self.user.email
+    def ratings(self):
+        a=self.rating
+        b=a.split()
+        x=b[0]
+        y=b[1]
+        return str(int(x)/int(y))
 
 
 Rating_choices = (

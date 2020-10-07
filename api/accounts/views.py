@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework import permissions
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from .models import User, OTP, Food, Restaurent
-from .serializers import UserSerializer, OTPSerializer, FoodSerializer, RestaurentSerializer
+from .serializers import UserSerializer, OTPSerializer, FoodSerializer, RestaurantSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.decorators import login_required
@@ -283,7 +283,7 @@ class FoodView(APIView):
     def get(self, request, pk):
 
         try:
-            restaurent_name = Restaurent.objects.filter(restaurent_name__icontains=pk)
+            restaurent_name = Restaurent.objects.filter(restaurent_name__iexact=pk)
             rest_id         = restaurent_name[0].id
             food = Food.objects.filter(rest_food=int(rest_id))
             serializer = FoodSerializer(food, many=True, context={'request':request})
@@ -319,7 +319,7 @@ class AddToCartOrRemove(APIView):
     def get(self, request, pk):
         item = get_object_or_404(Food, id=pk)
         #print(item,request.user)
-        order_item, created = OrderItem.objects.get_or_create(item = item, user = request.user, ordered = False)
+        order_item, created = OrderItem.objects.get_or_create(restaurant=item.rest_food, item = item, user = request.user, ordered = True)
         cart_qs = Cart.objects.filter(user=request.user, ordered=False)
         #print(cart_qs)
         if cart_qs.exists():
@@ -341,24 +341,83 @@ class AddToCartOrRemove(APIView):
 
     def post(self, request, pk):
         item = get_object_or_404(Food, id=pk)
-        #print(item,request.user)
-        order_item, created = OrderItem.objects.get_or_create(item = item, user = request.user, ordered = False)
-        cart_qs = Cart.objects.filter(user=request.user, ordered=False)
-        #print(cart_qs)
-        if cart_qs.exists():
-            order = cart_qs[0]
-            if order.items.filter(item__pk=item.pk).exists():
-                # order_item.quantity += 1
-                # order_item.save()
-                return Response(data={'details':"item already in your cart"},status=status.HTTP_201_CREATED)
-            else:
+        prevOrder   = OrderItem.objects.filter(user=request.user).filter(ordered=True)
+        order_item, created = OrderItem.objects.get_or_create(restaurant=item.rest_food, item = item, user = request.user, ordered = True)
+        if len(prevOrder)==0:
+            #order_item, created = OrderItem.objects.get_or_create(restaurant=item.rest_food, item = item, user = request.user, ordered = True)
+            cart_qs = Cart.objects.filter(user=request.user, ordered=False)
+            if cart_qs.exists():
+                order = cart_qs[0]
                 order.items.add(order_item)
                 return Response(data={'details':"item added to cart"},status=status.HTTP_201_CREATED)
-        else:
-            ordered_date = timezone.now()
-            order       = Cart.objects.create(user=request.user, ordered_date=ordered_date)
-            order.items.add(order_item)
-            return Response(data={"details":"item added to your cart"})
+            else:
+                ordered_date = timezone.now()
+                order       = Cart.objects.create(user=request.user, ordered_date=ordered_date)
+                order.items.add(order_item)
+                return Response(data={"details":"item added to your cart"})
+
+        try:
+            #order_item, created = OrderItem.objects.get_or_create(restaurant=item.rest_food, item = item, user = request.user, ordered = True)
+            if request.data.get('action')=='move to wishlist':
+                cart_qs = Cart.objects.filter(user=request.user, ordered=False)
+                if cart_qs.exists():
+                    order = cart_qs[0]
+                    if order.items.filter(item__pk=item.pk).exists():
+                        order_item.ordered = False
+                        order_item.save()
+                        return Response(data={'details':"item moved to wishlist"},status=status.HTTP_201_CREATED)
+                    else:
+                        order_item.ordered = False
+                        order_item.save()
+                        order.items.add(order_item)
+                        return Response(data={'details':"item moved to wishlist"},status=status.HTTP_410_GONE)
+                    return Response({"error":"unexpected error"})
+            if request.data.get('action')=='add to cart':
+                cart_qs = Cart.objects.filter(user=request.user, ordered=False)
+                if cart_qs.exists():
+                    order = cart_qs[0]
+                    if order.items.filter(item__pk=item.pk).exists():
+                        for i in range(len(prevOrder)):
+                            item=prevOrder[i]
+                            print(item)
+                            item.ordered=False
+                            item.save()
+                        order_item.ordered = True
+                        order_item.save()
+                        return Response(data={'details':"item added to your cart and previous one moved to wish list"},status=status.HTTP_201_CREATED)
+                    else:
+                        for i in range(len(prevOrder)):
+                            item=prevOrder[i]
+                            print(item)
+                            item.ordered=False
+                            item.save()
+                        order_item.ordered = True
+                        order_item.save()
+                        order.items.add(order_item)
+                        return Response(data={'details':"item added to your cart and previous one moved to wish list"},status=status.HTTP_201_CREATED)
+                    return Response({"error":"unexpected error"})
+        except:
+            pass
+        
+        
+        if prevOrder[0].restaurant==item.rest_food:
+            order_item, created = OrderItem.objects.get_or_create(restaurant=item.rest_food, item = item, user = request.user, ordered = True)
+            cart_qs = Cart.objects.filter(user=request.user, ordered=False)
+            if cart_qs.exists():
+                order = cart_qs[0]
+                if order.items.filter(item__pk=item.pk).exists():
+                    return Response(data={'details':"item already in your cart"},status=status.HTTP_201_CREATED)
+                else:
+                    order.items.add(order_item)
+                    return Response(data={'details':"item added to cart"},status=status.HTTP_201_CREATED)
+            else:
+                ordered_date = timezone.now()
+                order       = Cart.objects.create(user=request.user, ordered_date=ordered_date)
+                order.items.add(order_item)
+                return Response(data={"details":"item added to your cart"})
+        return Response(data={"details":"cannot add items from two different restaurant at a time want to move the same into the wishlist or continue with it and moving the previous ones into wish list."})
+
+############api--> api/cart/clearcart/   {'with delete request'}  <-- for removing all items from cart#############
 
     def delete(self, request, pk):
         if pk == 'clearcart':
@@ -390,7 +449,7 @@ class AddToCartOrRemove(APIView):
         if order_qs.exists():
             order = order_qs[0]
             if order.items.filter(item__pk=item.pk).exists():
-                order_item = OrderItem.objects.filter(item=item, user=request.user, ordered=False)[0]
+                order_item = OrderItem.objects.filter(item=item, user=request.user, ordered=True)[0]
                 if order_item.quantity>1:
                     order_item.quantity -=1
                     order_item.save()
@@ -402,11 +461,21 @@ class AddToCartOrRemove(APIView):
             else:
                 return Response(data={"details":"Food Item does not exists"}, status=status.HTTP_410_GONE)
         return Response(data={"details":"You do not have an order"}, status=status.HTTP_404_NOT_FOUND)
+########################rating function########################
     def put(self,request,pk):
         item = get_object_or_404(Food, pk=pk)
         rating = request.data.get("rating")
         a=item.rating
         b=a.split()
+        # if pk[1:]=="editreview":
+        #     previous_rating=request.data.get("prev_rating")
+        #     x=int(b[0])+int(rating)-int(previous_rating)
+        #     y=int(b[1])
+        #     data=x/y
+        #     a=str(x)+" "+str(y)
+        #     item.rating=a
+        #     item.save()
+        #     return Response(data={"rating":data},status=status.HTTP_202_ACCEPTED)
         x=int(b[0])+int(rating)
         y=int(b[1])+1
         data=x/y
@@ -420,21 +489,21 @@ class AddToCartOrRemove(APIView):
 #   """"""""""""""""""""""""""""     #
 ######################################
 
-class RestaurentList(APIView):
-    serializer_class  = RestaurentSerializer
+class RestaurantList(APIView):
+    serializer_class  = RestaurantSerializer
 
     def verify_user(self,request):
         user = User.objects.filter(email__iexact=str(request.user))
         return int(user[0].id)
 
     def get(self, request):
-        id1=self.verify_user(request)
+        #id1=self.verify_user(request)
         try:
-            queryset = Restaurent.objects.filter(user=id1)
+            queryset = Restaurent.objects.all()#filter(user=id1)
         except:
             raise Http404
         # print(queryset)
-        serializer = RestaurentSerializer(queryset, many= True,context={'request': request})
+        serializer = RestaurantSerializer(queryset, many= True,context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
     def post(self, request):
         id1=self.verify_user(request)
@@ -444,26 +513,38 @@ class RestaurentList(APIView):
         except:
             raise Http404
         if user.restaurent:
-            serializer=RestaurentSerializer(data=data)
+            serializer=RestaurantSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(data={'details':'user is not restaurent owner'},status=status.HTTP_400_BAD_REQUEST)
    
         
-from .serializers import RestaurentSerializer
+from .serializers import RestaurantSerializer
 
-class RestaurentView(APIView):
-    serializer_class = RestaurentSerializer
+class RestaurantView(APIView):
+    serializer_class = RestaurantSerializer
     def get(self, request, pk):
         try:
             queryset = Restaurent.objects.get(id=pk)
         except:
             return Response({'details':'restaurent not found with given id'})
-        serializer = RestaurentSerializer(queryset)
+        serializer = RestaurantSerializer(queryset)
         return Response(serializer.data, status=status.HTTP_302_FOUND)
-    # def delete(self,request,pk):
-        
+    def put(self,request,pk):
+        #id1         =   request.data.get("id")
+        rating       =   request.data.get("rating")
+        restaurant  =   get_object_or_404(Restaurent,id=pk)
+        a=restaurant.rating
+        b=a.split()
+        x=int(b[0])+int(rating)
+        y=int(b[1])+1
+        data=x/y
+        a=str(x)+" "+str(y)
+        restaurant.rating=a
+        restaurant.save()
+        return Response(data={"rating":data},status=status.HTTP_202_ACCEPTED)
+            
 class AddFoodItem(APIView):
     serializer_class = FoodSerializer
     def verify_user(self,request):

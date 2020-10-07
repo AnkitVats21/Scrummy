@@ -45,10 +45,13 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
     #     return instance
 
-class RestaurentSerializer(serializers.ModelSerializer):
+class RestaurantSerializer(serializers.ModelSerializer):
+    #url = serializers.HyperlinkedIdentityField(view_name="accounts:user-detail")
     class Meta:
         model   = Restaurent
-        fields = ('id','user','restaurent_name','zip_code','restaurent_address','description',)
+        fields = ('id','user','wallpaper',
+        'restaurent_name','zip_code',
+        'restaurent_address','description','rating','ratings')
 
     def create(self, validated_data):
         # restaurent_owner = validated_data.pop('user')
@@ -59,9 +62,9 @@ class RestaurentSerializer(serializers.ModelSerializer):
         #     return 'user not found'
         # print('user found')
         # restaurent.user=resturent_owner
-        restaurent = Restaurent(**validated_data)
-        restaurent.save()
-        return restaurent
+        restaurant = Restaurent(**validated_data)
+        restaurant.save()
+        return restaurant
 
 class FoodSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="accounts:food-detail")

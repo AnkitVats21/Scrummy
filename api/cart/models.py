@@ -1,16 +1,17 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime
-from accounts.models import User, Food
+from accounts.models import User, Food, Restaurent
 from django.core.validators import RegexValidator
 
 
 class OrderItem(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    ordered = models.BooleanField(default=False)
+    user        = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurant  = models.ForeignKey(Restaurent, on_delete=models.SET_NULL, null=True)
+    ordered     = models.BooleanField(default=False)
     ordered_date= models.DateTimeField(blank=True,null=True)
-    item = models.ForeignKey(Food, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
+    item        = models.ForeignKey(Food, on_delete=models.CASCADE)
+    quantity    = models.IntegerField(default=1)
 
     def __str__(self):
         return f"{self.quantity} of {self.item.name}"
@@ -24,6 +25,8 @@ class OrderItem(models.Model):
    
     def delivery_time(self):
         return self.item.delivery_time
+    def restaurant_id(self):
+        return self.item.rest_food.id
     
 
 class Cart(models.Model):
@@ -53,6 +56,7 @@ class MyOrder(models.Model):
     ordered = models.BooleanField(default=False)
     ordered_date= models.DateTimeField(auto_now=True, blank=True,null=True)
     item = models.ForeignKey(Food, on_delete=models.CASCADE)
+    restaurant  = models.ForeignKey(Restaurent, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField(default=1)
 
     def __str__(self):
@@ -70,9 +74,10 @@ class CheckoutAddress(models.Model):
 
 
 class Payment(models.Model):
+    restaurant  = models.ForeignKey(Restaurent,on_delete=models.SET_NULL, null=True)
     user        = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     amount      = models.FloatField()
     timestamp   = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.user.email
+        return "paid by ->> "+ str(self.user)

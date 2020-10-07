@@ -7,7 +7,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields  = ('id','user','username',
         'ordered','item',
         'item_name','quantity',
-        'get_total_item_price','delivery_time')
+        'get_total_item_price','delivery_time','restaurant')
 
     def create(self, validated_data):
         return OrderItem.objects.create(**validated_data)
@@ -43,4 +43,4 @@ class MyOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model   = MyOrder
         fields  = ('id','user',
-        'ordered','item', 'quantity',)
+        'ordered','item', 'quantity','restaurant')
