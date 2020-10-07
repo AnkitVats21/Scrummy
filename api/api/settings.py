@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +25,7 @@ SECRET_KEY = 'qlev2jumncl(_g@(*75&*m9(wh_&3kud=f8y!9gb93o&av+0es'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['413cb7cb0951.ngrok.io','127.0.0.1']
+ALLOWED_HOSTS = ['b9fc936a4aed.ngrok.io','127.0.0.1']
 
 
 # Application definition
@@ -56,22 +56,36 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'api.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
+# TEMPLATES = [
+#     {
+#         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+#         'DIRS': [],
+#         'APP_DIRS': True,
+#         'OPTIONS': {
+#             'context_processors': [
+#                 'django.template.context_processors.debug',
+#                 'django.template.context_processors.request',
+#                 'django.contrib.auth.context_processors.auth',
+#                 'django.contrib.messages.context_processors.messages',
+#             ],
+#         },
+#     },
+# ]
+TEMPLATES = [  
+    {  
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',  
+        'DIRS': [os.path.join(BASE_DIR,'templates')],  
+        'APP_DIRS': True,  
+        'OPTIONS': {  
+            'context_processors': [  
+                'django.template.context_processors.debug',  
+                'django.template.context_processors.request',  
+                'django.contrib.auth.context_processors.auth',  
+                'django.contrib.messages.context_processors.messages',  
+            ],  
+        },  
+    },  
 ]
-
 WSGI_APPLICATION = 'api.wsgi.application'
 
 

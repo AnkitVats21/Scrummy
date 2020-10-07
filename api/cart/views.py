@@ -8,12 +8,13 @@ from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from .models import Cart, OrderItem, CheckoutAddress, Payment, MyOrder
 from .serializers import CartSerializer, OrderItemSerializer, CheckoutAddressSerializer, PaymentSerializer, MyOrderSerializer
 from accounts.serializers import FoodSerializer
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from accounts.models import Food, User, Restaurent
 from django.core.mail import send_mail
 from cart import serializers
 from django.shortcuts import render
-
+from django.template import Context, loader
+from django.template.loader import render_to_string
 #Create your views here.        
 
 class OrderItemView(APIView):
@@ -88,12 +89,8 @@ class OrderItemView(APIView):
             amount=0
             discounted_price=0
             order_summary="S. No.\tItem Name\t\tPrice\t\tDiscounted Price\n"
-            o_d={
-            "item_name":[],
-            "quantity":[],
-            "price":[],
-            "discount_price":[]
-            }
+            summary=[]
+            
             for i in range(len(item)):
                 food=item[i]
                 a=int(food.quantity)*int(food.item.price)
@@ -102,17 +99,25 @@ class OrderItemView(APIView):
                 discounted_price += b
                 obj = MyOrder.objects.create(user=food.user, ordered=True, item = food.item, quantity = food.quantity)
                 obj.save()
-                o_d["item_name"].append(food.item_name())
-                o_d["quantity"].append(food.quantity)
-                o_d["price"].append(food.item.price)
-                o_d["discount_price"].append(b)
+                o_d={}
+                o_d["sno"]=i+1
+                o_d["item_name"]=food.item_name()
+                o_d["quantity"]=food.quantity
+                o_d["price"]=food.item.price
+                o_d["offer"]=food.item.offer
+                o_d["discount_price"]=b
+                summary.append(o_d)
                 order_summary += ("{}.\t{}\t\t{}x{}={}\t{}\n").format(i+1,str(food.item_name()), str(food.quantity),str(food.item.price),a,b )
-            o_d["total"]=discounted_price
+            r=item[0].restaurant
+            print(r)
             context= {
-            'ordersummary': o_d
+            'summary': summary,
+            'total': discounted_price,
+            'restaurant': r,
+            'name': request.user.profile.name
             }
-            return render(request,'email_template.html',context)
-            print(o_d)
+            template = loader.get_template('email_template.html') # getting our template  
+            html_message = render_to_string('email_template.html', context)
             order_summary += ("\t\t\t\tTotal\t\t{}\n").format(discounted_price)
             #print(amount," ",discounted_price)
             restname=item[0].restaurant
@@ -127,10 +132,8 @@ class OrderItemView(APIView):
                 print(user_email)
                 if user_email:
                     head = ("Your Scrummy order from {}").format(restname)
-                    print(head)
-                    body = ("Hello {}!\nYour order summary\nOrder ID: SCN00{} \n{}\nWe hope you have enjoyed your meal from {}.").format(request.user.profile.name,serializer.data.get('id'),order_summary,restname)
-                    print(body)
-                    #send_mail(head, str(body), 'in.scrummy@gmail.com', [user_email], fail_silently = False)
+                    body = ("Hello {}!\nYour order summary\nOrder ID: SCN00{} \nWe hope you have enjoyed your meal from {}.").format(request.user.profile.name,serializer.data.get('id'),restname)
+                    send_mail(head, str(body), 'in.scrummy@gmail.com', [user_email], html_message = html_message)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)       
             return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)    
         return Response(data={"details":"please add some food item in your cart before you checkout"} ,status=status.HTTP_400_BAD_REQUEST)    
@@ -246,6 +249,7 @@ class MyOrderView(APIView):
         # return Response(serializer.data)
 
     # post request for developers use only
+    def post(self, request):
         data = request.data
         serializer  = OrderItemSerializer(data=data)
         if serializer.is_valid():
