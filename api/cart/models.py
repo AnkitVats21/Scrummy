@@ -14,7 +14,7 @@ class OrderItem(models.Model):
     quantity    = models.IntegerField(default=1)
 
     def __str__(self):
-        return f"{self.quantity} of {self.item.name}"
+        return f"{self.user.email}-->{self.quantity} of {self.item.name}"
     def username(self):
         return self.user.email
 
@@ -27,6 +27,8 @@ class OrderItem(models.Model):
         return self.item.delivery_time
     def restaurant_id(self):
         return self.item.rest_food.id
+    def food_id(self):
+        return self.item.id
     
 
 class Cart(models.Model):
@@ -58,13 +60,24 @@ class MyOrder(models.Model):
     item = models.ForeignKey(Food, on_delete=models.CASCADE)
     restaurant  = models.ForeignKey(Restaurent, on_delete=models.SET_NULL, null=True)
     quantity = models.IntegerField(default=1)
+    delivery_status = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.quantity} of {self.item.name}"
+        return f"{self.user.email}-->{self.quantity} of {self.item.name}"
     def rest_name(self):
         return self.restaurant.restaurent_name
     def food_name(self):
         return self.item.name
+    def username(self):
+        return self.user.email
+    def get_total_item_price(self):
+        return self.quantity * self.item.price
+    def delivery_time(self):
+        return self.item.delivery_time
+    def restaurant_id(self):
+        return self.item.rest_food.id
+    def food_id(self):
+        return self.item.id
     
 class CheckoutAddress(models.Model):
     user            = models.ForeignKey(User, on_delete=models.CASCADE)

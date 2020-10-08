@@ -25,7 +25,7 @@ SECRET_KEY = 'qlev2jumncl(_g@(*75&*m9(wh_&3kud=f8y!9gb93o&av+0es'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['b9fc936a4aed.ngrok.io','127.0.0.1']
+ALLOWED_HOSTS = ['9b4b3d159c1e.ngrok.io','127.0.0.1']
 
 
 # Application definition
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'accounts',
     'cart',
+    'restaurent',
 ]
 
 MIDDLEWARE = [
@@ -187,6 +188,6 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=600),
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=1000),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=7),
 }

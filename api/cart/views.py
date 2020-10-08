@@ -88,7 +88,6 @@ class OrderItemView(APIView):
         if pk=='checkout' and len(item):
             amount=0
             discounted_price=0
-            order_summary="S. No.\tItem Name\t\tPrice\t\tDiscounted Price\n"
             summary=[]
             
             for i in range(len(item)):
@@ -97,7 +96,7 @@ class OrderItemView(APIView):
                 amount += a
                 b=int(food.quantity)*int(food.item.price)*((100-int(food.item.offer))/100)
                 discounted_price += b
-                obj = MyOrder.objects.create(user=food.user, ordered=True, item = food.item, quantity = food.quantity)
+                obj = MyOrder.objects.create(user=food.user, ordered=True, item = food.item, quantity = food.quantity, restaurant=food.item.rest_food)
                 obj.save()
                 o_d={}
                 o_d["sno"]=i+1
@@ -107,29 +106,24 @@ class OrderItemView(APIView):
                 o_d["offer"]=food.item.offer
                 o_d["discount_price"]=b
                 summary.append(o_d)
-                order_summary += ("{}.\t{}\t\t{}x{}={}\t{}\n").format(i+1,str(food.item_name()), str(food.quantity),str(food.item.price),a,b )
             r=item[0].restaurant
-            print(r)
+            #print(r)
             context= {
             'summary': summary,
             'total': discounted_price,
-            'restaurant': r,
+            'restaurant': str(r),
             'name': request.user.profile.name
             }
-            template = loader.get_template('email_template.html') # getting our template  
             html_message = render_to_string('email_template.html', context)
-            order_summary += ("\t\t\t\tTotal\t\t{}\n").format(discounted_price)
-            #print(amount," ",discounted_price)
             restname=item[0].restaurant
             id2 = Restaurent.objects.filter(restaurent_name=restname)[0].id
             request_data['restaurant']=id2
             request_data['amount']=amount
             request_data['discounted_price']=discounted_price
             serializer = PaymentSerializer(data=request_data)
-            #item.delete()
+            item.delete()
             if serializer.is_valid():
                 serializer.save()
-                print(user_email)
                 if user_email:
                     head = ("Your Scrummy order from {}").format(restname)
                     body = ("Hello {}!\nYour order summary\nOrder ID: SCN00{} \nWe hope you have enjoyed your meal from {}.").format(request.user.profile.name,serializer.data.get('id'),restname)
@@ -219,6 +213,7 @@ class CartView(APIView):
 
 class MyOrderView(APIView):
     serializer_class = MyOrderSerializer
+    permission_classes=(permissions.IsAuthenticated,)
 
     def verify_user(self,request):
         user = User.objects.filter(email__iexact=str(request.user))
@@ -256,3 +251,26 @@ class MyOrderView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# on demand api
+class TotalCartAmount(APIView):
+    def get(self,request):
+        try:
+            order   = OrderItem.objects.filter(user=request.user).filter(ordered=True)
+        except:
+            raise Http404
+        dp=0
+        amount=0
+        for i in range(len(order)):
+            food   = order[i]
+            amount += food.get_total_item_price()
+            dp  += int(food.item.price)*int(food.quantity)*int(food.item.offer)/100
+        final_price=amount-dp
+        return Response(data={"amount":amount,"discount_price":final_price})
+    #order summary
+    # def post(self,request):
+    #     try:
+    #         order   = OrderItem.objects.filter(user=request.user).filter(ordered=True)
+    #     except:
+    #         raise Http404

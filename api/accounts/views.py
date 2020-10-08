@@ -79,7 +79,7 @@ class CreateUserAccount(APIView):
                     otp = randint(1000, 9999) 
                     t = int(time.time())
                     OTP.objects.create(otp = otp, otp_email = user_email, time= t)
-                    body = ("Hello! Your one time password verification for registering in Scrummy is {}").format(otp)
+                    body = ("Your One TIme Password is {} for registration on Scrummy.").format(otp)
 
                     send_mail('OTP Verification', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
                     serializer = UserSerializer(data = req_data)
@@ -492,6 +492,7 @@ class AddToCartOrRemove(APIView):
 
 class RestaurantList(APIView):
     serializer_class  = RestaurantSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     def verify_user(self,request):
         user = User.objects.filter(email__iexact=str(request.user))
