@@ -175,9 +175,9 @@ class Food(models.Model):
     price       = models.IntegerField(blank=False)
     rating      = models.CharField(max_length=20, default="5 1")
     image       = models.ImageField(max_length=2000,blank=True,null=True)
-    delivery_time   = models.IntegerField(default=60,blank=False)
+    delivery_time  = models.IntegerField(default=60,blank=False)
     cooking_time   = models.IntegerField(default=60,blank=True)
-    offer       = models.PositiveIntegerField(default=0)
+    offer       = models.PositiveIntegerField(default=0,blank=True, null=True)
     category    = models.CharField(choices= Category_choices, max_length=25)
     cuisine     = models.CharField(choices= Cuisine_choices, max_length=25)
 

@@ -66,13 +66,15 @@ class RestaurantSerializer(serializers.ModelSerializer):
         restaurant.save()
         return restaurant
 
-class FoodSerializer(serializers.HyperlinkedModelSerializer):
+class FoodSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="accounts:food-detail")
     class Meta:
         model   = Food
         fields = ('id','url','name',
         'image','price',
         'rating','ratings','offer','category',
-        'cuisine','delivery_time','rest_food_id','restname',)
-    # def create(self, validated_data):
-# 'rest_food',
+        'cuisine','delivery_time','rest_food','restname',)
+    def create(self, validated_data):
+        food = Food(**validated_data)
+        food.save()
+        return food

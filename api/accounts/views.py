@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404
 from random import randint
 from django.core.mail import send_mail
 from django.http import Http404
+from restaurent.permissions import IsRestaurentOwner
 
 class VerifyOTP(APIView):
     queryset = OTP.objects.all()
@@ -276,7 +277,7 @@ class FoodList(APIView):
         
 
 class FoodView(APIView):
-    # permission_classes=(permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes=(permissions.IsAuthenticatedOrReadOnly,)
     queryset = Food.objects.all()
     serializer_class  = FoodSerializer
 
@@ -293,7 +294,7 @@ class FoodView(APIView):
         try:
             food    = Food.objects.filter(cuisine__iexact=pk)
             if not food:
-                food = Food.objects.filter(category__iexact=pk)
+                food = Food.objects.filter(category__istartswith=pk)
             if not food:
                 food = Food.objects.filter(name__icontains=pk)
             if not food:
@@ -312,10 +313,8 @@ from django.utils import timezone
 
 
 class AddToCartOrRemove(APIView):
-    def verify_user(self,request):
-        user = User.objects.filter(email__iexact=str(request.user))
-        return int(user[0].id)
-    
+    permission_classes = (permissions.IsAuthenticated,)
+
     def get(self, request, pk):
         item = get_object_or_404(Food, id=pk)
         #print(item,request.user)
@@ -343,7 +342,7 @@ class AddToCartOrRemove(APIView):
         item = get_object_or_404(Food, id=pk)
         prevOrder   = OrderItem.objects.filter(user=request.user).filter(ordered=True)
         order_item, created = OrderItem.objects.get_or_create(restaurant=item.rest_food, item = item, user = request.user, ordered = True)
-        if len(prevOrder)==0:
+        if len(prevOrder)==0 : #by pass wishlist by adding <or len(prevOrder)!=0>
             #order_item, created = OrderItem.objects.get_or_create(restaurant=item.rest_food, item = item, user = request.user, ordered = True)
             cart_qs = Cart.objects.filter(user=request.user, ordered=False)
             if cart_qs.exists():
@@ -422,7 +421,7 @@ class AddToCartOrRemove(APIView):
 
     def delete(self, request, pk):
         if pk == 'clearcart':
-            id1     =self.verify_user(request)
+            id1     =request.user.id
             try:
                 orders  = OrderItem.objects.filter(user=id1)
                 orders.delete()
@@ -484,6 +483,7 @@ class AddToCartOrRemove(APIView):
         item.rating=a
         item.save()
         return Response(data={"rating":data},status=status.HTTP_202_ACCEPTED)
+
 ######################################
 #   """"""""""""""""""""""""""""     #
 #   add food item in restaurent      #
@@ -492,23 +492,18 @@ class AddToCartOrRemove(APIView):
 
 class RestaurantList(APIView):
     serializer_class  = RestaurantSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-
-    def verify_user(self,request):
-        user = User.objects.filter(email__iexact=str(request.user))
-        return int(user[0].id)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly)
 
     def get(self, request):
-        #id1=self.verify_user(request)
+        #id1=request.user.id
         try:
             queryset = Restaurent.objects.all()#filter(user=id1)
         except:
             raise Http404
-        # print(queryset)
         serializer = RestaurantSerializer(queryset, many= True,context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
     def post(self, request):
-        id1=self.verify_user(request)
+        id1=request.user.id
         data = request.data
         try:
             user = User.objects.filter(id=id1)[0]
@@ -533,6 +528,7 @@ class RestaurantView(APIView):
             return Response({'details':'restaurent not found with given id'})
         serializer = RestaurantSerializer(queryset)
         return Response(serializer.data, status=status.HTTP_302_FOUND)
+########__--->>>>>>>>>>>Restaurant rating<<<<<<<<<<<<---__########
     def put(self,request,pk):
         #id1         =   request.data.get("id")
         rating       =   request.data.get("rating")
@@ -546,23 +542,20 @@ class RestaurantView(APIView):
         restaurant.rating=a
         restaurant.save()
         return Response(data={"rating":data},status=status.HTTP_202_ACCEPTED)
-            
+
+
+
 class AddFoodItem(APIView):
     serializer_class = FoodSerializer
-    def verify_user(self,request):
-        user = User.objects.filter(email__iexact=str(request.user))
-        return int(user[0].id)
+    permission_classes = (permissions.IsAuthenticated,IsRestaurentOwner)
     def post(self, request):
-        id1=self.verify_user(request)
+        id1=request.user.id
         try:
-            user = User.objects.get(id=id1)[0]
+            user = User.objects.get(id=id1)
         except:
             raise Http404
-        #print(request.data)
-        if user.restaurent:
-            serializer = FoodSerializer(data=request.data,context={'request': request})
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(data={"details":"user is not provider"},status=status.HTTP_400_BAD_REQUEST)
+        serializer = FoodSerializer(data=request.data,context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

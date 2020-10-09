@@ -25,13 +25,9 @@ class OrderItemView(APIView):
     def get_food_data(self,data,request):
         food = FoodSerializer(data,context={'request': request})
         return food
-    
-    def verify_user(self,request):
-        user = User.objects.filter(email__iexact=str(request.user))
-        return int(user[0].id)
 
     def get(self, request, pk):
-        id1=self.verify_user(request)
+        id1=request.user.id
         if pk=='wishlist':
             try:
                 item=OrderItem.objects.filter(user__exact = id1).filter(ordered=False)
@@ -78,7 +74,7 @@ class OrderItemView(APIView):
         except:
             pass
         user = request.user #not needed yet
-        id1=self.verify_user(request)
+        id1=request.user.id
         request_data = request_data.copy()
         request_data['user'] = id1
         try:
@@ -135,14 +131,11 @@ class OrderItemView(APIView):
 
 
 class CheckOrderStatus(APIView):
-    def verify_user(self,request):
-        user = User.objects.filter(email__iexact=str(request.user))
-        return int(user[0].id)
-    #pk is the id of the food
+    permission_classes = (permissions.IsAuthenticated,)
     def get(self, request, pk):
-        id1     =self.verify_user(request)
+        id1     =request.user.id
         try:
-            orders  = OrderItem.objects.filter(user=id1).filter(item=pk).filter(ordered=False)
+            orders  = OrderItem.objects.filter(user=id1).filter(item=pk).filter(ordered=True)
             if orders.exists():
                 return Response(data={"details":"item in your cart"}, status=status.HTTP_302_FOUND)
             return Response(data={"details":"item not in your cart"}, status=status.HTTP_404_NOT_FOUND)
@@ -154,17 +147,8 @@ class CheckoutAddressView(APIView):
     serializer_class    = CheckoutAddressSerializer
     permission_classes  = (permissions.IsAuthenticated,)
 
-    def verify_user(self,request):
-        user = User.objects.filter(email__iexact=str(request.user))
-        return int(user[0].id)
-
     def get(self,request):
-        try:
-            user = User.objects.filter(email=str(request.user))
-            id = self.verify_user(request)
-        except:
-            raise Http404
-        address = CheckoutAddress.objects.filter(user=id)
+        address = CheckoutAddress.objects.filter(user=request.user.id)
         serializer = CheckoutAddressSerializer(address,many=True)
         return Response(serializer.data)
 
@@ -188,11 +172,8 @@ class CheckoutAddressView(APIView):
 class PaymentView(APIView):
     permission_classes=(permissions.IsAuthenticated,)
     serializer_class = PaymentSerializer
-    def verify_user(self,request):
-        user = User.objects.filter(email__iexact=str(request.user))
-        return int(user[0].id)
     def get(self, request):
-        id1=self.verify_user(request)
+        id1=request.user.id
         data = Payment.objects.filter(user=id1)
         serializer = PaymentSerializer(data, many=True)
         return Response(serializer.data)
@@ -215,16 +196,12 @@ class MyOrderView(APIView):
     serializer_class = MyOrderSerializer
     permission_classes=(permissions.IsAuthenticated,)
 
-    def verify_user(self,request):
-        user = User.objects.filter(email__iexact=str(request.user))
-        return int(user[0].id)
-
     def get_food_data(self,data,request):
         food = FoodSerializer(data,context={'request': request})
         return food
 
     def get(self, request):
-        id1     =self.verify_user(request)
+        id1     =request.user.id
         # item = OrderItem.objects.filter(id=id1)
         try:
             item=MyOrder.objects.filter(user__exact = id1).filter(ordered=True)
@@ -255,6 +232,7 @@ class MyOrderView(APIView):
 
 # on demand api
 class TotalCartAmount(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
     def get(self,request):
         try:
             order   = OrderItem.objects.filter(user=request.user).filter(ordered=True)

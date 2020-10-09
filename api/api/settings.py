@@ -25,7 +25,7 @@ SECRET_KEY = 'qlev2jumncl(_g@(*75&*m9(wh_&3kud=f8y!9gb93o&av+0es'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['9b4b3d159c1e.ngrok.io','127.0.0.1']
+ALLOWED_HOSTS = ['a80e69b3fef6.ngrok.io','127.0.0.1']
 
 
 # Application definition

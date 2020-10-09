@@ -2,39 +2,44 @@ from django.shortcuts import render
 import time
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import permissions
+from django.http import Http404
+from rest_framework import permissions, viewsets, status
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from cart.models import Cart, OrderItem, CheckoutAddress, Payment
 from cart.serializers import CartSerializer, OrderItemSerializer, MyOrderSerializer, CheckoutAddressSerializer, PaymentSerializer
 from accounts.serializers import FoodSerializer
-from rest_framework import status
-from django.http import Http404
 from accounts.models import Food, User,Restaurent
 from cart.models import OrderItem, MyOrder
-
+from .serializers import EmployeeSerializer
+from .models import Employee, Revenue
+from .permissions import IsRestaurentOwner
 class RestaurentOrderView(APIView):
-    def get(self,request,pk):
-        user        = request.user
-        restaurant  =   Restaurent.objects.filter(user=request.user)
-        if user.restaurent:
-            ffr             = Restaurent.objects.filter(restaurent_name__iexact=pk)
-            ordered_food    = MyOrder.objects.filter(ordered=True).filter(restaurant=ffr.id)
+    permission_classes = (permissions.IsAuthenticated,IsRestaurentOwner,)
+    def get(self,request,pk):##pk==id showall/pk==id undelivered/pk==id delivered #id is rest_id action{showall,undelivered,delivered}
+        rest_id,action      =   pk.split()
+        if action=='showall':
+            ordered_food    = MyOrder.objects.filter(ordered=True).filter(restaurant=rest_id)
             serializer      = MyOrderSerializer(ordered_food, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(data={"details":"not a restaurent owner"})
-        
+        if action=='undelivered':
+            ordered_food    = MyOrder.objects.filter(ordered=True,delivery_status=False).filter(restaurant=rest_id)
+            serializer      = MyOrderSerializer(ordered_food, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        if action=='delivered':
+            ordered_food    = MyOrder.objects.filter(ordered=True,delivery_status=True).filter(restaurant=rest_id)
+            serializer      = MyOrderSerializer(ordered_food, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
 
     def post(self,request,pk):
-        user        = request.user
-        restaurant  =   Restaurent.objects.filter(user=request.user)
-        if user.restaurent:
-            ffr             = Restaurent.objects.filter(restaurent_name__iexact=pk)
-            ordered_food    = MyOrder.objects.filter(delivery_status=False).filter(restaurant=ffr.id)
-            idf=request.data.get('ids')
-            for i in idf:
-                food=ordered_food.filter(id=i)
-                food.delivery_status==True
-                food.save()
-            return Response({"details":"Item delivered"})
+        rest_id,order_id    = pk.split()
+        ordered_food    = MyOrder.objects.filter(delivery_status=False).filter(restaurant=ffr.id)
+        food=ordered_food.filter(id=pk)
+        food.delivery_status==True
+        food.save()
+        return Response({"details":"Item delivered"})
 
-clas
+class EmployeeRelatedView(viewsets.ModelViewSet):
+    permission_classes  = (permissions.IsAuthenticated, IsRestaurentOwner,)
+    serializer_class    = EmployeeSerializer
+    queryset            = Employee.objects.all()
