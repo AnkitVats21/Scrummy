@@ -1,9 +1,8 @@
 import time
-from rest_framework import viewsets, status, generics, mixins
+from rest_framework import viewsets, status, generics, mixins, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework import permissions
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from .models import User, OTP, Food, Restaurent
 from .serializers import UserSerializer, OTPSerializer, FoodSerializer, RestaurantSerializer
@@ -15,10 +14,12 @@ from random import randint
 from django.core.mail import send_mail
 from django.http import Http404
 from restaurent.permissions import IsRestaurentOwner
+from django.template.loader import render_to_string
+from django.shortcuts import render
 
 class VerifyOTP(APIView):
-    queryset = OTP.objects.all()
-    serializer_class = OTPSerializer
+    queryset            = OTP.objects.all()
+    serializer_class    = OTPSerializer
 
     def post(self, request):
         request_data = request.data
@@ -27,9 +28,9 @@ class VerifyOTP(APIView):
         t1           = int(time.time())
         
         try:
-            obj = OTP.objects.filter(otp_email__iexact = request_email)[0]
+            obj     = OTP.objects.filter(otp_email__iexact = request_email)[0]
         except:
-            data = {"error":"OTP object not found"}
+            data    = {"error":"OTP object not found"}
             return Response(data,status=status.HTTP_404_NOT_FOUND)
 
         stored_db_email  = obj.otp_email 
@@ -77,19 +78,22 @@ class CreateUserAccount(APIView):
                 data = {"error":"User with the given email address already exists"}
                 return Response(data, status = status.HTTP_226_IM_USED)
             else:
-                    otp = randint(1000, 9999) 
-                    t = int(time.time())
+                    otp  = randint(100000, 999999) 
+                    t    = int(time.time())
                     OTP.objects.create(otp = otp, otp_email = user_email, time= t)
-                    body = ("Your One TIme Password is {} for registration on Scrummy.").format(otp)
-
-                    send_mail('OTP Verification', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
+                    context      = {'otp':otp}
+                    #return render(request,'otp_template.html',context)
+                    html_message = render_to_string('otp_template.html', context)
+                    head         = 'OTP Verification'
+                    body = ("Your One Time Password is {} for registration on Scrummy.").format(otp)
+                    send_mail(head, str(body), 'in.scrummy@gmail.com', [user_email], html_message = html_message)
                     serializer = UserSerializer(data = req_data)
                     if serializer.is_valid():
                         serializer.save()
                         return Response(serializer.data, status = status.HTTP_201_CREATED)
                     else:
                         return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
-                    data = {"details":"OTP sent successfully"}
+                    data    = {"details":"OTP sent successfully"}
                     return Response(data, status = status.HTTP_200_OK)
         else:
             data = {"error":"Please enter valid email"}
@@ -97,16 +101,16 @@ class CreateUserAccount(APIView):
 
 class ResetPasswordOTP(APIView):
     def post(self, request):
-        user_email = request.data.get("email")
+        user_email  = request.data.get("email")
         request_otp = request.data.get("otp")
         #print(user_email,request_otp)
         #user = User.objects.filter(email__iexact = user_email)[0]
         try:
             obj = OTP.objects.filter(otp_email__iexact = user_email)[0]
         except:
-            data = {"error":"wrong email"}
+            data= {"error":"wrong email"}
             return Response(data,status=status.HTTP_404_NOT_FOUND)
-        t1 = time.time()
+        t1  = time.time()
         stored_db_email  = obj.otp_email 
         stored_db_otp    = obj.otp
         t2               = obj.time
@@ -153,12 +157,11 @@ class UserAccountsDetails(APIView):
         # return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
 
 class UserAccountUpdate(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = UserSerializer
+    permission_classes  = (permissions.IsAuthenticated,)
+    serializer_class    = UserSerializer
     def patch(self, request,id):
         user_id=request.user.id
         user = User.objects.filter(id=id)
-        #user = self.get_object(id=id)
         serializer = UserSerializer(request.user, data = request.data)
         if serializer.is_valid():
             serializer.save()
@@ -170,53 +173,48 @@ class UserAccountUpdate(APIView):
         user = User.objects.get(id=id)# self.get_object(id)
         user.delete()
         return Response(data={"details":"account deleted"},status = status.HTTP_204_NO_CONTENT)
-        # return Response(data , status = status.HTTP_400_BAD_REQUEST)
+
 
     
 class GenerateOTP(APIView):
     def post(self, request):
         user_email = request.data.get("email")
-        #print(user_email)
+
         try:
-            user= User.objects.filter(email__iexact = user_email)[0]
+            user   = User.objects.filter(email__iexact = user_email)[0]
         except:
             return Response(data={"error":"User not found with given email"}, status=status.HTTP_404_NOT_FOUND)
         
         try:
-            obj = OTP.objects.filter(otp_email__iexact = user_email)[0]
+            obj    = OTP.objects.filter(otp_email__iexact = user_email)[0]
             obj.delete()
         except:
             if check(user_email):
                 t=int(time.time())
-                otp = randint(1000, 9999) 
-                body = ("Hello! Your OTP is {}. Do not share it with anyone.").format(otp)
+                otp     = randint(1000, 9999) 
+                body    = ("Hello! Your OTP is {}. Do not share it with anyone.").format(otp)
                 OTP.objects.create(otp = otp, otp_email = user_email, time =t)
                 send_mail('OTP Verification', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
-                data = {"details":"OTP sent succesfully"}
-                return Response(data, status = status.HTTP_200_OK)
+                return Response(data = {"details":"OTP sent succesfully"}, status = status.HTTP_200_OK)
             else:
-                data = { "error":"invalid email"}
-                return Response( data, status = status.HTTP_406_NOT_ACCEPTABLE)
+                return Response(data = { "error":"invalid email"}, status = status.HTTP_406_NOT_ACCEPTABLE)
 
         if check(user_email):
             t=int(time.time())
-            otp = randint(1000, 9999) 
-            body = ("Hello! Your OTP is {}. Do not share it with anyone.").format(otp)
+            otp     = randint(1000, 9999) 
+            body    = ("Hello! Your OTP is {}. Do not share it with anyone.").format(otp)
             OTP.objects.create(otp = otp, otp_email = user_email, time =t)
             send_mail('OTP Verification', body, 'in.scrummy@gmail.com', [user_email], fail_silently = False)
-            data = {"details":"OTP sent succesfully"}
-            return Response(data, status = status.HTTP_200_OK)
+            return Response(data = {"details":"OTP sent succesfully"}, status = status.HTTP_200_OK)
         else:
-            data = { "error":"invalid email"}
-            return Response( data, status = status.HTTP_406_NOT_ACCEPTABLE)
+            return Response(data = { "error":"invalid email"}, status = status.HTTP_406_NOT_ACCEPTABLE)
         
 class CheckOTPVerifiedStatus(APIView):
     def post(self , request, **args):
-        request_email = request.data.get('email')
-        request_password = request.data.get('password')
+        request_email       = request.data.get('email')
+        request_password    = request.data.get('password')
         try:
             user = User.objects.filter(email__iexact = request_email)[0]
-            
         except:
             data = {"error":"email not found in users"}
             return Response(data, status=status.HTTP_404_NOT_FOUND)
@@ -257,16 +255,14 @@ class FoodList(APIView):
         except:
             return Response(data={"detais":"object not found"}, status=status.HTTP_204_NO_CONTENT)
         serializer = FoodSerializer(food, many=True, context={'request':request})
-        #food.rest_food)
         data=food[0]
         data= data.rest_food
-        #print(data.restaurent_name)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
     def post(self, request):
         food_data   = request.data
-        user_email = request.user
-        user = User.objects.filter(email__iexact=str(user_email))
+        user_email  = request.user
+        user        = User.objects.filter(email__iexact=str(user_email))
         if user.restaurent:
             serializer = FoodSerializer(data=food_data)
             if serializer.is_valid():
@@ -286,8 +282,8 @@ class FoodView(APIView):
         try:
             restaurent_name = Restaurent.objects.filter(restaurent_name__iexact=pk)
             rest_id         = restaurent_name[0].id
-            food = Food.objects.filter(rest_food=int(rest_id))
-            serializer = FoodSerializer(food, many=True, context={'request':request})
+            food            = Food.objects.filter(rest_food=int(rest_id))
+            serializer      = FoodSerializer(food, many=True, context={'request':request})
             return Response(serializer.data, status=status.HTTP_200_OK)
         except:
             pass
@@ -316,11 +312,9 @@ class AddToCartOrRemove(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, pk):
-        item = get_object_or_404(Food, id=pk)
-        #print(item,request.user)
+        item    = get_object_or_404(Food, id=pk)
         order_item, created = OrderItem.objects.get_or_create(restaurant=item.rest_food, item = item, user = request.user, ordered = True)
         cart_qs = Cart.objects.filter(user=request.user, ordered=False)
-        #print(cart_qs)
         if cart_qs.exists():
             order = cart_qs[0]
             if order.items.filter(item__pk=item.pk).exists():
@@ -333,9 +327,9 @@ class AddToCartOrRemove(APIView):
                 return Response(data={'details':"item added to cart"},status=status.HTTP_201_CREATED)
         else:
             ordered_date = timezone.now()
-            order       = Cart.objects.create(user=request.user, ordered_date=ordered_date)
+            order        = Cart.objects.create(user=request.user, ordered_date=ordered_date)
             order.items.add(order_item)
-            return Response(data={"details":"item added to your cart"})
+            return Response(data={"details":"item added to your cart"},status=status.HTTP_201_CREATED)
 
 
     def post(self, request, pk):
@@ -356,7 +350,6 @@ class AddToCartOrRemove(APIView):
                 return Response(data={"details":"item added to your cart"})
 
         try:
-            #order_item, created = OrderItem.objects.get_or_create(restaurant=item.rest_food, item = item, user = request.user, ordered = True)
             if request.data.get('action')=='move to wishlist':
                 cart_qs = Cart.objects.filter(user=request.user, ordered=False)
                 if cart_qs.exists():
@@ -415,7 +408,7 @@ class AddToCartOrRemove(APIView):
                 order.items.add(order_item)
                 print(order_item)
                 return Response(data={"details":"item added to your cart"})
-        return Response(data={"details":"cannot add items from two different restaurant at a time want to move the same into the wishlist or continue with it and moving the previous ones into wish list."})
+        return Response(data={"details":"conflicting restaurant"})
 
 ############api--> api/cart/clearcart/   {'with delete request'}  <-- for removing all items from cart#############
 
@@ -465,6 +458,7 @@ class AddToCartOrRemove(APIView):
     def put(self,request,pk):
         item = get_object_or_404(Food, pk=pk)
         rating = request.data.get("rating")
+        print(rating)
         a=item.rating
         b=a.split()
         # if pk[1:]=="editreview":
@@ -492,7 +486,7 @@ class AddToCartOrRemove(APIView):
 
 class RestaurantList(APIView):
     serializer_class  = RestaurantSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     def get(self, request):
         #id1=request.user.id
@@ -544,17 +538,16 @@ class RestaurantView(APIView):
         return Response(data={"rating":data},status=status.HTTP_202_ACCEPTED)
 
 
-
 class AddFoodItem(APIView):
-    serializer_class = FoodSerializer
-    permission_classes = (permissions.IsAuthenticated,IsRestaurentOwner)
+    serializer_class    = FoodSerializer
+    permission_classes  = (permissions.IsAuthenticated,IsRestaurentOwner)
     def post(self, request):
         id1=request.user.id
         try:
-            user = User.objects.get(id=id1)
+            user    = User.objects.get(id=id1)
         except:
             raise Http404
-        serializer = FoodSerializer(data=request.data,context={'request': request})
+        serializer  = FoodSerializer(data=request.data,context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)

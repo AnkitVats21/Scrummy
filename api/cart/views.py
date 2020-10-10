@@ -215,7 +215,7 @@ class MyOrderView(APIView):
                 serializer.data[i]['image']=food_item.data['image']
                 serializer.data[i]['offer']=food_item.data['offer']
                 serializer.data[i]['restaurent']=food_item.data['restname']
-            return Response(serializer.data, status=status.HTTP_302_FOUND)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(data={'details':'data not found'},status=status.HTTP_404_NOT_FOUND)
         # serializer = MyOrderSerializer(item, many=True,context={'request': request})
         # return Response(serializer.data)

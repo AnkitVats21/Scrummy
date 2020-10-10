@@ -12,11 +12,11 @@ class Employee(models.Model):
     
     
 class Revenue(models.Model):
-    amount  = models.FloatField()
-    owner   = models.OneToOneField(User,on_delete=models.CASCADE)
-    user    = models.ForeignKey(User,on_delete=models.CASCADE, related_name="customer")
-    restaurant=models.ForeignKey(Restaurent,on_delete=models.CASCADE)
-    timestamp   = models.DateTimeField(auto_now_add=True)
+    amount          = models.FloatField()
+    owner           = models.OneToOneField(User,on_delete=models.CASCADE)
+    user            = models.ForeignKey(User,on_delete=models.CASCADE, related_name="customer")
+    restaurant      = models.ForeignKey(Restaurent,on_delete=models.CASCADE)
+    timestamp       = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return "paid by --> "+str(self.user.email)+" to -->"+self.restaurant.restaurent_name     

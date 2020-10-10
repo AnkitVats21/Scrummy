@@ -120,10 +120,10 @@ class Restaurent(models.Model):
     user                = models.ForeignKey(User, on_delete=models.CASCADE,related_name='owner', blank=True, null=True)
     restaurent_name     = models.CharField(unique=True, max_length=50, blank=False)
     restaurent_address  = models.CharField(max_length=200, blank=False)
-    zip_code     = models.CharField(max_length=6, blank=False)
-    description = models.CharField(max_length=500, blank=False)
-    wallpaper   = models.ImageField(max_length=2000, blank=True,null=True)
-    rating      = models.CharField(default="5 1", max_length=30)
+    zip_code            = models.CharField(max_length=6, blank=False)
+    description         = models.CharField(max_length=500, blank=False)
+    wallpaper           = models.ImageField(max_length=2000, blank=True,null=True)
+    rating              = models.CharField(default="5 1", max_length=30)
     def __str__(self):
         return self.restaurent_name
         
@@ -170,17 +170,17 @@ Cuisine_choices =(
     )
 
 class Food(models.Model):
-    rest_food   = models.ForeignKey(Restaurent, on_delete=models.CASCADE, related_name='restaurent_food', blank=True, null=True)
-    name        = models.CharField(max_length=100, blank=False)
-    price       = models.IntegerField(blank=False)
-    rating      = models.CharField(max_length=20, default="5 1")
-    image       = models.ImageField(max_length=2000,blank=True,null=True)
-    delivery_time  = models.IntegerField(default=60,blank=False)
-    cooking_time   = models.IntegerField(default=60,blank=True)
-    offer       = models.PositiveIntegerField(default=0,blank=True, null=True)
-    category    = models.CharField(choices= Category_choices, max_length=25)
-    cuisine     = models.CharField(choices= Cuisine_choices, max_length=25)
-
+    rest_food       = models.ForeignKey(Restaurent, on_delete=models.CASCADE, related_name='restaurent_food', blank=True, null=True)
+    name            = models.CharField(max_length=100, blank=False)
+    price           = models.IntegerField(blank=False)
+    rating          = models.CharField(max_length=20, default="5 1")
+    image           = models.ImageField(max_length=2000,blank=True,null=True)
+    delivery_time   = models.IntegerField(default=60,blank=False)
+    cooking_time    = models.IntegerField(default=60,blank=True)
+    offer           = models.PositiveIntegerField(default=0,blank=True, null=True)
+    category        = models.CharField(choices= Category_choices, max_length=25)
+    cuisine         = models.CharField(choices= Cuisine_choices, max_length=25)
+    
     def __str__(self):
         return self.name
 

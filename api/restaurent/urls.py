@@ -10,5 +10,6 @@ router.register(r'api/employee', EmployeeRelatedView, basename='employee')
 
 urlpatterns = [
     path('api/restorders/<pk>/', views.RestaurentOrderView.as_view()),
+    path('api/restpayments/<pk>/', views.PaymentsView.as_view()),
     url(r'^', include(router.urls)),
 ]

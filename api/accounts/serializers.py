@@ -5,22 +5,22 @@ from django.contrib.auth import authenticate
 class OTPSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = OTP
-        fields = ('otp_email','otp')
+        model   = OTP
+        fields  = ('otp_email','otp')
 
 class UserProfileSerializer(serializers.ModelSerializer):    
     class Meta:
-        model = UserProfile
-        fields = ('name','address','picture')
+        model   = UserProfile
+        fields  = ('name','address','picture')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     profile = UserProfileSerializer(required=True)
 
     class Meta:
-        model = User
-        fields = ('id', 'email', 'password', 'profile','restaurent')
-        extra_kwargs = {'password': {'write_only': True}}
+        model       = User
+        fields      = ('id', 'email', 'password', 'profile','restaurent')
+        extra_kwargs= {'password': {'write_only': True}}
 
     def create(self, validated_data):
         profile_data = validated_data.pop('profile')
@@ -50,8 +50,10 @@ class RestaurantSerializer(serializers.ModelSerializer):
     class Meta:
         model   = Restaurent
         fields = ('id','user','wallpaper',
-        'restaurent_name','zip_code',
-        'restaurent_address','description','rating','ratings')
+                    'restaurent_name','zip_code',
+                    'restaurent_address','description',
+                    'rating','ratings',
+                    )
 
     def create(self, validated_data):
         # restaurent_owner = validated_data.pop('user')
@@ -70,11 +72,13 @@ class FoodSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="accounts:food-detail")
     class Meta:
         model   = Food
-        fields = ('id','url','name',
-        'image','price',
-        'rating','ratings','offer','category',
-        'cuisine','delivery_time','rest_food','restname',)
+        fields  = ('id','url','name',
+                    'image','price',
+                    'rating','ratings','offer','category',
+                    'cuisine','delivery_time','rest_food',
+                    'restname',
+                    )
     def create(self, validated_data):
-        food = Food(**validated_data)
+        food    = Food(**validated_data)
         food.save()
         return food
