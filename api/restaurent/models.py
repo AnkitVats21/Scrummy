@@ -20,3 +20,19 @@ class Revenue(models.Model):
 
     def __str__(self):
         return "paid by --> "+str(self.user.email)+" to -->"+self.restaurant.restaurent_name     
+
+class Feedback(models.Model):
+    rate_choices=(
+        (1,"VERY BAD"),
+        (2,"BAD"),
+        (3,"GOOD"),
+        (4,"VERY GOOD"),
+        (5,"EXCELLENT"),
+    )
+    user        = models.ForeignKey(User, on_delete=models.CASCADE)
+    rate_count  = models.IntegerField(choices=rate_choices)
+    review      = models.TextField(max_length=500, blank=True, null=True)
+
+    def __str__(self):
+        return str(self.user) + " --> "+ str(self.rate_count)
+    

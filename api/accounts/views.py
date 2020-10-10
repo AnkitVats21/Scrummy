@@ -320,8 +320,16 @@ class AddToCartOrRemove(APIView):
             if order.items.filter(item__pk=item.pk).exists():
                 order_item.quantity += 1
                 order_item.save()
-                data = ("item quantity increased to {} in the cart.").format(order_item.quantity)
-                return Response(data={"details":data,"quantity":order_item.quantity},status=status.HTTP_201_CREATED)
+                data = []#("item quantity increased to {} in the cart.").format(order_item.quantity)
+                cart = OrderItem.objects.filter(user=request.user)
+                for i in range(len(cart)):
+                    cart_item   = cart[i]
+                    o_id        = cart_item.id
+                    f_id        = cart_item.item_id
+                    q           = cart_item.quantity
+                    qdict       = {"id":o_id,"quantity":q,"food_id":f_id}
+                    data.append(qdict)
+                return Response(data=data,status=status.HTTP_201_CREATED)
             else:
                 order.items.add(order_item)
                 return Response(data={'details':"item added to cart"},status=status.HTTP_201_CREATED)
@@ -446,30 +454,47 @@ class AddToCartOrRemove(APIView):
                 if order_item.quantity>1:
                     order_item.quantity -=1
                     order_item.save()
+                    data = []
+                    cart = OrderItem.objects.filter(user=request.user)
+                    for i in range(len(cart)):
+                        cart_item   = cart[i]
+                        o_id        = cart_item.id
+                        f_id        = cart_item.item_id
+                        q           = cart_item.quantity
+                        qdict       = {"id":o_id,"quantity":q,"food_id":f_id}
+                        data.append(qdict)
+                    return Response(data=data,status=status.HTTP_201_CREATED)
                 else:
                     order_item.delete()
-                data = ("item quantity decreased to {} in the cart.").format(order_item.quantity)
-                return Response(data={"details":data,"quantity":order_item.quantity},status=status.HTTP_201_CREATED)
+                    data = ("item quantity decreased to {} in the cart.").format(order_item.quantity)
+                    return Response(data={"details":data,"quantity":order_item.quantity},status=status.HTTP_201_CREATED)
                 #return Response(data={"details":"Food Item quantity updated"}, status= status.HTTP_200_OK)
             else:
                 return Response(data={"details":"Food Item does not exists"}, status=status.HTTP_410_GONE)
         return Response(data={"details":"You do not have an order"}, status=status.HTTP_404_NOT_FOUND)
 ########################rating function########################
     def put(self,request,pk):
-        item = get_object_or_404(Food, pk=pk)
         rating = request.data.get("rating")
+        try:
+            f_id,action = pk.split()
+            item = get_object_or_404(Food, pk=f_id)
+            if action=="editreview":
+                previous_rating=request.data.get("prev_rating")
+                a=item.rating
+                b=a.split()
+                x=int(b[0])+int(rating)-int(previous_rating)
+                y=int(b[1])
+                data=x/y
+                a=str(x)+" "+str(y)
+                item.rating=a
+                item.save()
+                return Response(data={"rating":data},status=status.HTTP_202_ACCEPTED)
+        except:
+            pass
+        item = get_object_or_404(Food, pk=pk)
         print(rating)
         a=item.rating
         b=a.split()
-        # if pk[1:]=="editreview":
-        #     previous_rating=request.data.get("prev_rating")
-        #     x=int(b[0])+int(rating)-int(previous_rating)
-        #     y=int(b[1])
-        #     data=x/y
-        #     a=str(x)+" "+str(y)
-        #     item.rating=a
-        #     item.save()
-        #     return Response(data={"rating":data},status=status.HTTP_202_ACCEPTED)
         x=int(b[0])+int(rating)
         y=int(b[1])+1
         data=x/y
@@ -552,3 +577,10 @@ class AddFoodItem(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+from cart.serializers import OrderItemSerializer
+class FeaturedFoodView(APIView):
+    def get(self,request):
+        food        = OrderItem.objects.all()
+        serializer  = OrderItemSerializer(food, many=True)
+        return Response(serializer.data)

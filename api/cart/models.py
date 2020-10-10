@@ -103,4 +103,7 @@ class Payment(models.Model):
     timestamp       = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "paid by ->> "+ str(self.user)
+        r="None"
+        if self.restaurant != None:
+            r= self.restaurant.restaurent_name
+        return "paid by ->> "+ str(self.user) +" to--> "+ r
