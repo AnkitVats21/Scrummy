@@ -271,7 +271,7 @@ class FoodList(APIView):
             return Response(data={"details":"please enter valid data"})
         return Response(data={"details":"you are not a provider"})
         
-
+from .models import FoodSearch
 class FoodView(APIView):
     permission_classes=(permissions.IsAuthenticatedOrReadOnly,)
     queryset = Food.objects.all()
@@ -292,7 +292,13 @@ class FoodView(APIView):
             if not food:
                 food = Food.objects.filter(category__istartswith=pk)
             if not food:
-                food = Food.objects.filter(name__icontains=pk)
+                food = Food.objects.filter(name__istartswith=pk)
+                search = FoodSearch.objects.filter(word=food[0].name)
+                if search:
+                    search[0].frequency +=1
+                    search[0].save()
+                else:
+                    search = FoodSearch.objects.create(word=food[0].name, frequency=1)
             if not food:
                 food = Food.objects.filter(id=pk)
         except:
@@ -584,3 +590,36 @@ class FeaturedFoodView(APIView):
         food        = OrderItem.objects.all()
         serializer  = OrderItemSerializer(food, many=True)
         return Response(serializer.data)
+
+class FoodSearchView(APIView):
+
+    def get(self, request,pk):
+        obj = FoodSearch.objects.all()
+        lst=[{"food_name":obj[0].word,"frequency":obj[0].frequency}]
+        f = obj[0].frequency
+        for i in range(len(obj)-1):
+            s = obj[i+1]
+            if s.frequency>obj[0].frequency:
+                temp = {"food_name":s.word, "frequency":s.frequency}
+                lst.insert(0,temp)
+            if s.frequency<obj[0].frequency:
+                temp = {"food_name":s.word, "frequency":s.frequency}
+                lst.append(temp)
+        return Response(lst[:int(pk)], status=status.HTTP_200_OK)
+
+class FoodSearchList(APIView):
+    
+    def get(self, request):
+        obj = FoodSearch.objects.all()
+        lst=[{"food_name":obj[0].word,"frequency":obj[0].frequency}]
+        f = obj[0].frequency
+        for i in range(len(obj)-1):
+            s = obj[i+1]
+            if s.frequency>obj[0].frequency:
+                temp = {"food_name":s.word, "frequency":s.frequency}
+                lst.insert(0,temp)
+            if s.frequency<obj[0].frequency:
+                temp = {"food_name":s.word, "frequency":s.frequency}
+                lst.append(temp)
+        return Response(lst, status=status.HTTP_200_OK)
+        

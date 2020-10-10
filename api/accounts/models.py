@@ -194,3 +194,9 @@ class Food(models.Model):
         y=b[1]
         return str(int(x)/int(y))
 
+class FoodSearch(models.Model):
+    word        = models.CharField(max_length=30)
+    frequency   = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.word

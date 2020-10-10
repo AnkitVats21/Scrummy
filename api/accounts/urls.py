@@ -37,6 +37,8 @@ urlpatterns += [
     path('api/add-to-cart/<pk>/', views.AddToCartOrRemove.as_view(), name='add-to-cart'),
     path('api/foodrating/<pk>/', views.AddToCartOrRemove.as_view(), name='rate food'),
     path('api/featured/', views.FeaturedFoodView.as_view()),
+    path('api/popularsearch/', views.FoodSearchList.as_view()),
+    path('api/popularsearch/<pk>/', views.FoodSearchView.as_view()),
     #add-to-cart/<pk>/ here pk is id of the food
     #in request if you pass {"action":"move to wishlist"} then that food item will be added to wish list
     #but if you'll pass {"action":"add to cart"} then previous orders will be moved to wishlist and new one will be added to cart

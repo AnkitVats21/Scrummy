@@ -6,7 +6,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 
 from .forms import UserAdminCreationForm, UserAdminChangeForm
-from .models import User, UserProfile, OTP, Food, Restaurent
+from .models import User, UserProfile, OTP, Food, Restaurent, FoodSearch
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
@@ -55,3 +55,5 @@ class RestaurentAdmin(admin.ModelAdmin):
 @admin.register(Food)
 class FoodAdmin(admin.ModelAdmin):
     list_display =('name', 'category', 'rating', 'price')
+
+admin.site.register(FoodSearch)
