@@ -1,5 +1,3 @@
-
-
 from django.db import models
 from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser
@@ -42,7 +40,6 @@ class UserManager(BaseUserManager):
         user.admin = True
         user.save(using=self._db)
         return user
-
 
 class User(AbstractBaseUser):
     email = models.EmailField(
@@ -167,6 +164,7 @@ Cuisine_choices =(
         ('French', "French"),
         ('Punjabi', "Punjabi"),
         ('Sweets','Sweets'),
+        ('Non-veg', 'Non-veg'),
     )
 
 class Food(models.Model):

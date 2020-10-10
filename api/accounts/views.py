@@ -230,7 +230,7 @@ class CheckOTPVerifiedStatus(APIView):
 
 import re 
   
-regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+regex = '(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)'
 
 def check(email):  
     if(re.search(regex,email)):  
@@ -608,7 +608,7 @@ class FoodSearchView(APIView):
         return Response(lst[:int(pk)], status=status.HTTP_200_OK)
 
 class FoodSearchList(APIView):
-    
+
     def get(self, request):
         obj = FoodSearch.objects.all()
         lst=[{"food_name":obj[0].word,"frequency":obj[0].frequency}]
